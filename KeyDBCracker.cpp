@@ -54,7 +54,7 @@ char *keydbFileName = (char*) malloc( strlen(profilePath) + strlen(KEYDB_FILENAM
 
 	if( keyFile == NULL )
 	{
-		printf("\n Failed to open file %s ", keydbFileName);
+		printf("\n Failed to open file %s \n\n", keydbFileName);
 		return FALSE;
 	}
 

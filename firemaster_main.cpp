@@ -21,7 +21,6 @@ KeyCrackData keyCrackData;
 const char* bruteCharSet;
 int bruteCharCount;
 int brutePosMaxCount;
-
 /**** End GLobal Declarations ****/
 
 int main(int argc, char* argv[]){
@@ -45,6 +44,8 @@ int main(int argc, char* argv[]){
 		}
 	}	
 	*/
+
+	usage();
 
 	// argv[1] is the profile directory
 	if (argc >= 2) { profileDir = argv[1]; } 	
@@ -103,9 +104,9 @@ static int CheckMasterPassword(char *password)
 
 
 void usage(){
-	printf("Usage\n\t./firemaster_linux [options]\n\n");
-	printf("\t-p  [pattern]t\tex. a**a*1\n");
-	printf("\t-i  [location of key3.db]\n"); 
+	printf("Usage\n\t./firemaster_linux [firefox profile directory]\n");	
+	//printf("\t-  [pattern]t\tex. a**a*1\n");
+	//printf("\t-i  [location of key3.db]\n"); 
 	printf("\n");	
 }
 
