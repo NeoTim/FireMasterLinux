@@ -82,7 +82,9 @@ SEC_BEGIN_PROTOS
  * NOTE: this does not suppport PKCS 5 v2 because it's only used for the
  * keyDB which only support PKCS 5 v1, PFX, and PKCS 12.
  */
-NSSPKCS5PBEParameter *nsspkcs5_NewParam(int alg, struct SECItem *salt, int iterator);
+
+// My Mod
+NSSPKCS5PBEParameter *nsspkcs5_NewParam(int alg, SECItem *salt, int iterator);
 
 
 /* Encrypt/Decrypt data using password based encryption.  

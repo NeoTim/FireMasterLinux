@@ -3,6 +3,8 @@
 #include "sha_fast.h"
 #include <unistd.h>
 
+#define MAX_PASSWORD LENGTH 128
+
 /***** Function Prototypes ******/
 void usage();
 static int CheckMasterPassword(char*);
@@ -21,6 +23,7 @@ KeyCrackData keyCrackData;
 const char* bruteCharSet;
 int bruteCharCount;
 int brutePosMaxCount;
+
 /**** End GLobal Declarations ****/
 
 int main(int argc, char* argv[]){
@@ -56,7 +59,7 @@ int main(int argc, char* argv[]){
 	printf("%s\n", "Max number of characters for the password?");
 	scanf("%i",&brutePosMaxCount);
 
-	char brutePassword[brutePosMaxCount];
+	char brutePassword[MAX_PASSWORD_LENGTH]="";
 	BruteCrack(bruteCharSet, brutePassword, 0, 0);
 
 	printf("\n%s\n\n", "No Luck: try again with better options");
@@ -67,7 +70,7 @@ int main(int argc, char* argv[]){
 void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, int next )
 {	
 	int i;
-	
+
 	if (index >= brutePosMaxCount) return;
 
 	for(i=0; i< bruteCharCount; i++ )
@@ -76,6 +79,7 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 		brutePasswd[index+1] = 0;
 		next++;
 
+		printf("%s\n", brutePasswd);
 		//Now verify if this is the master password
 		if( CheckMasterPassword(brutePasswd) )
 		{
@@ -89,7 +93,7 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 
 static int CheckMasterPassword(char *password)
 {
-	unsigned char passwordHash[SHA1_LENGTH+1];
+		unsigned char passwordHash[SHA1_LENGTH+1];
 
         SHA1Context ctx;
 
@@ -114,7 +118,7 @@ int FireMasterInit(char *dirProfile)
 {
     SECItem saltItem;
 
-	if( CrackKeyData(dirProfile, keyCrackData) == FALSE)
+	if( CrackKeyData(dirProfile, keyCrackData) == false)
 	{
 		exit(0);	
 	}
@@ -135,9 +139,14 @@ int FireMasterInit(char *dirProfile)
 	// SEC_OID_PKCS12_PBE_WITH_SHA1_AND_TRIPLE_DES_CBC
 
 	// Setup the encrypted password-check string
-    	memcpy(encString, keyCrackData.encData, keyCrackData.encDataLen );
-
+    memcpy(encString, keyCrackData.encData, keyCrackData.encDataLen );
 	
+	if( CheckMasterPassword("") == true )
+	{
+		printf("\n Master password is not set ...exiting FireMaster \n\n");
+		exit(0);
+	}
+
 	// Calculate partial sha1 data for password hashing...
     SHA1_Begin(&pctx);
 	SHA1_Update(&pctx, keyCrackData.globalSalt, keyCrackData.globalSaltLen);

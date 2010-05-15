@@ -6,7 +6,7 @@
  * 
  * Software distributed under the License is distributed on an "AS
  * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- * implied. See the License for the specific language governing
+ * implied. See the License for the specific language governing	
  * rights and limitations under the License.
  * 
  * The Original Code is the Netscape security libraries.
@@ -207,8 +207,8 @@ SECItem *nsspkcs5_PBKDF1Extended(NSSPKCS5PBEParameter *pbe_param, SECItem *pwite
  
 }
 */
-
 #define HMAC_BUFFER 64
+
 #define NSSPBE_ROUNDUP(x,y) ((((x)+((y)-1))/(y))*(y))
 #define NSSPBE_MIN(x,y) ((x) < (y) ? (x) : (y))
 
@@ -355,7 +355,7 @@ NSSPKCS5PBEParameter *nsspkcs5_NewParam(int alg, SECItem *salt, int iterator)
 	
 	// Setup initial state value
 	// Its important to initialize this to zero 
-	//memset(initialState, 0, 128);
+	//memset(initialSta0te, 0, 128);
   	//memcpy(initialState, salt->data, salt->len);
 		
 
@@ -393,11 +393,12 @@ typedef SECItem *(* pkcs5_crypto_func)(SECItem *key, SECItem *iv,
 // Optimized for FireMaster....
 int nsspkcs5_CipherData(NSSPKCS5PBEParameter *pbe_param, const unsigned char *pwhash, const unsigned char *encString)
 {
+ 
 	unsigned char *hashKey = computeKey(pbe_param, pwhash);
 
    	DESContext *dctx;
 	dctx = DES_CreateContext(hashKey, hashKey + 32); //, NSS_DES_EDE3_CBC);
-	
+
 	return DES_EDE3CBCDe(dctx, encString);
 
 }

@@ -1,53 +1,63 @@
-/*
- * The contents of this file are subject to the Mozilla Public
- * License Version 1.1 (the "License"); you may not use this file
- * except in compliance with the License. You may obtain a copy of
- * the License at http://www.mozilla.org/MPL/
- * 
- * Software distributed under the License is distributed on an "AS
- * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- * implied. See the License for the specific language governing
- * rights and limitations under the License.
- * 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
  * The Original Code is the Netscape security libraries.
- * 
- * The Initial Developer of the Original Code is Netscape
- * Communications Corporation.  Portions created by Netscape are 
- * Copyright (C) 1994-2000 Netscape Communications Corporation.  All
- * Rights Reserved.
- * 
- * Portions created by Sun Microsystems, Inc. are Copyright (C) 2003
- * Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * The Initial Developer of the Original Code is
+ * Netscape Communications Corporation.
+ * Portions created by the Initial Developer are Copyright (C) 1994-2000
+ * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *	Dr Vipul Gupta <vipul.gupta@sun.com>, Sun Microsystems Laboratories
- * 
- * Alternatively, the contents of this file may be used under the
- * terms of the GNU General Public License Version 2 or later (the
- * "GPL"), in which case the provisions of the GPL are applicable 
- * instead of those above.  If you wish to allow use of your 
- * version of this file only under the terms of the GPL and not to
- * allow others to use your version of this file under the MPL,
- * indicate your decision by deleting the provisions above and
- * replace them with the notice and other provisions required by
- * the GPL.  If you do not delete the provisions above, a recipient
- * may use your version of this file under either the MPL or the
- * GPL.
- */
+ *   Dr Vipul Gupta <vipul.gupta@sun.com>, Sun Microsystems Laboratories
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 #ifndef _SECOIDT_H_
 #define _SECOIDT_H_
+
+#include "utilrename.h"
+
 /*
  * secoidt.h - public data structures for ASN.1 OID functions
  *
- * $Id: secoidt.h,v 1.15 2003/06/06 04:48:45 nelsonb%netscape.com Exp $
+ * $Id: secoidt.h,v 1.30 2009/04/14 02:04:08 alexei.volkov.bugs%sun.com Exp $
  */
 
-//#include "secitem.h"
+#include "secitem.h"
 
-//typedef struct SECOidDataStr SECOidData;
-//typedef struct SECAlgorithmIDStr SECAlgorithmID;
+typedef struct SECOidDataStr SECOidData;
+typedef struct SECAlgorithmIDStr SECAlgorithmID;
 
+/*
+** An X.500 algorithm identifier
+*/
+struct SECAlgorithmIDStr {
+    SECItem algorithm;
+    SECItem parameters;
+};
 
 /*
  * Misc object IDs - these numbers are for convenient handling.
@@ -258,7 +268,7 @@ typedef enum {
     SEC_OID_PKCS9_X509_CRL = 170,
     SEC_OID_PKCS9_FRIENDLY_NAME = 171,
     SEC_OID_PKCS9_LOCAL_KEY_ID = 172,
-    SEC_OID_PKCS12_KEY_USAGE = 173,
+    SEC_OID_BOGUS_KEY_USAGE = 173,
 
     /*Diffe Helman OIDS */
     SEC_OID_X942_DIFFIE_HELMAN_KEY = 174,
@@ -307,7 +317,10 @@ typedef enum {
 
     /* Elliptic Curve Cryptography (ECC) OIDs */
     SEC_OID_ANSIX962_EC_PUBLIC_KEY  = 200,
-    SEC_OID_ANSIX962_ECDSA_SIGNATURE_WITH_SHA1_DIGEST = 201,
+    SEC_OID_ANSIX962_ECDSA_SHA1_SIGNATURE = 201,
+
+#define SEC_OID_ANSIX962_ECDSA_SIGNATURE_WITH_SHA1_DIGEST \
+	SEC_OID_ANSIX962_ECDSA_SHA1_SIGNATURE
 
     /* ANSI X9.62 named elliptic curves (prime field) */
     SEC_OID_ANSIX962_EC_PRIME192V1  = 202,
@@ -392,22 +405,90 @@ typedef enum {
     SEC_OID_AVA_HOUSE_IDENTIFIER     = 271,
     SEC_OID_AVA_PSEUDONYM            = 272,
 
+    /* More OIDs */
+    SEC_OID_PKIX_CA_ISSUERS          = 273,
+    SEC_OID_PKCS9_EXTENSION_REQUEST  = 274,
+
+    /* new EC Signature oids */
+    SEC_OID_ANSIX962_ECDSA_SIGNATURE_RECOMMENDED_DIGEST = 275,
+    SEC_OID_ANSIX962_ECDSA_SIGNATURE_SPECIFIED_DIGEST = 276,
+    SEC_OID_ANSIX962_ECDSA_SHA224_SIGNATURE = 277,
+    SEC_OID_ANSIX962_ECDSA_SHA256_SIGNATURE = 278,
+    SEC_OID_ANSIX962_ECDSA_SHA384_SIGNATURE = 279,
+    SEC_OID_ANSIX962_ECDSA_SHA512_SIGNATURE = 280,
+
+    /* More id-ce and id-pe OIDs from RFC 3280 */
+    SEC_OID_X509_HOLD_INSTRUCTION_CODE      = 281,
+    SEC_OID_X509_DELTA_CRL_INDICATOR        = 282,
+    SEC_OID_X509_ISSUING_DISTRIBUTION_POINT = 283,
+    SEC_OID_X509_CERT_ISSUER                = 284,
+    SEC_OID_X509_FRESHEST_CRL               = 285,
+    SEC_OID_X509_INHIBIT_ANY_POLICY         = 286,
+    SEC_OID_X509_SUBJECT_INFO_ACCESS        = 287,
+
+    /* Camellia OIDs (RFC3657)*/
+    SEC_OID_CAMELLIA_128_CBC                = 288,
+    SEC_OID_CAMELLIA_192_CBC                = 289,
+    SEC_OID_CAMELLIA_256_CBC                = 290,
+
+    /* PKCS 5 V2 OIDS */
+    SEC_OID_PKCS5_PBKDF2                    = 291,
+    SEC_OID_PKCS5_PBES2                     = 292,
+    SEC_OID_PKCS5_PBMAC1                    = 293,
+    SEC_OID_HMAC_SHA1                       = 294,
+    SEC_OID_HMAC_SHA224                     = 295,
+    SEC_OID_HMAC_SHA256                     = 296,
+    SEC_OID_HMAC_SHA384                     = 297,
+    SEC_OID_HMAC_SHA512                     = 298,
+
+    SEC_OID_PKIX_TIMESTAMPING               = 299,
+    SEC_OID_PKIX_CA_REPOSITORY              = 300,
+
+    SEC_OID_ISO_SHA1_WITH_RSA_SIGNATURE     = 301,
+
+    SEC_OID_SEED_CBC			    = 302,
+
+    SEC_OID_X509_ANY_POLICY                 = 303,
+
     SEC_OID_TOTAL
 } SECOidTag;
 
 #define SEC_OID_SECG_EC_SECP192R1 SEC_OID_ANSIX962_EC_PRIME192V1
 #define SEC_OID_SECG_EC_SECP256R1 SEC_OID_ANSIX962_EC_PRIME256V1
+#define SEC_OID_PKCS12_KEY_USAGE  SEC_OID_X509_KEY_USAGE
 
 /* fake OID for DSS sign/verify */
 #define SEC_OID_SHA SEC_OID_MISS_DSS
 
-typedef enum 
-{
+typedef enum {
     INVALID_CERT_EXTENSION = 0,
     UNSUPPORTED_CERT_EXTENSION = 1,
     SUPPORTED_CERT_EXTENSION = 2
 } SECSupportExtenTag;
 
+struct SECOidDataStr {
+    SECItem            oid;
+    SECOidTag          offset;
+    const char *       desc;
+    unsigned long      mechanism;
+    SECSupportExtenTag supportedExtension;	
+    				/* only used for x.509 v3 extensions, so
+				   that we can print the names of those
+				   extensions that we don't even support */
+};
+
+/* New Opaque extended OID table API.  
+ * These are algorithm policy Flags, used with functions
+ * NSS_SetAlgorithmPolicy & NSS_GetAlgorithmPolicy.
+ */
+#define NSS_USE_ALG_IN_CERT_SIGNATURE  0x00000001  /* CRLs and OCSP, too */
+#define NSS_USE_ALG_IN_CMS_SIGNATURE   0x00000002  /* used in S/MIME */
+#define NSS_USE_ALG_RESERVED           0xfffffffc  /* may be used in future */
+
+/* Code MUST NOT SET or CLEAR reserved bits, and must NOT depend on them
+ * being all zeros or having any other known value.  The reserved bits
+ * must be ignored.
+ */
 
 
 #endif /* _SECOIDT_H_ */
