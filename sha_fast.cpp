@@ -34,8 +34,8 @@
  */
 #include <memory.h>
 #include <string.h>
-#include "prtypes.h"
-#include "prerror.h"
+#include <prtypes.h>
+#include <prerror.h>
 
 #include "sha_fast.h"
 

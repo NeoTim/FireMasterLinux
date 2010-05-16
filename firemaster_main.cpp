@@ -29,7 +29,7 @@ int brutePosMaxCount;
 int main(int argc, char* argv[]){
 	
 	char* patternmatch;
-	char* profileDir = "/home/m107038/.mozilla/firefox/0zp3wtho.default/";
+	char* profileDir = "/home/me/.mozilla/firefox/o4u8k1aq.default/";
 	int i;
 
 	// parse arguments

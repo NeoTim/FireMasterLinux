@@ -34,7 +34,7 @@
 #ifndef _SECPKCS5_H_
 #define _SECPKCS5_H_
 
-#include "plarena.h"
+#include <plarena.h>
 #include "seccomon.h"
 #include "hasht.h"
 
