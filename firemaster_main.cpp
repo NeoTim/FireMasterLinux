@@ -29,7 +29,7 @@ int brutePosMaxCount;
 int main(int argc, char* argv[]){
 	
 	char* patternmatch;
-	char* profileDir = "/home/me/.mozilla/firefox/o4u8k1aq.default/";
+	char* profileDir = "/home/m107038/.mozilla/firefox/0zp3wtho.default/";
 	int i;
 
 	// parse arguments
@@ -79,11 +79,10 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 		brutePasswd[index+1] = 0;
 		next++;
 
-		printf("%s\n", brutePasswd);
 		//Now verify if this is the master password
 		if( CheckMasterPassword(brutePasswd) )
 		{
-			printf("\n%s\t%s","Password : ", brutePasswd);
+			printf("\nPassword: \t\"%s\"\n", brutePasswd);
 			exit(0);
 		}
 		BruteCrack(bruteCharSet, brutePasswd,index+1, next);
@@ -150,6 +149,7 @@ int FireMasterInit(char *dirProfile)
 	// Calculate partial sha1 data for password hashing...
     SHA1_Begin(&pctx);
 	SHA1_Update(&pctx, keyCrackData.globalSalt, keyCrackData.globalSaltLen);
+	printf("saltlen: %i\n", keyCrackData.globalSaltLen);
 
 	return true;
 }

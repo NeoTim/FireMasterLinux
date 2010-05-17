@@ -182,7 +182,6 @@ void SHA1_Begin(SHA1Context *ctx)
   ctx->H[3] = 0x10325476L;
   ctx->H[4] = 0xc3d2e1f0L;
 
-  
 }
 
 

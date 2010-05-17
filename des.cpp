@@ -801,7 +801,8 @@ void DES_EDE3CBCEn(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
 int DES_EDE3CBCDe(DESContext *cx, const BYTE *in)
 {
     //const BYTE * bufend;
-    //HALF oldciphertext[2];
+//	unsigned char* str; int j;
+//    HALF oldciphertext[2];
     HALF plaintext    [2];
 
 	//printf("\n DES_EDE3CBCDe ");
@@ -809,15 +810,17 @@ int DES_EDE3CBCDe(DESContext *cx, const BYTE *in)
 
     //for (bufend = in + len; in != bufend; ) 
 	//{
-		//oldciphertext[0] = cx->iv[0];
-		//oldciphertext[1] = cx->iv[1];
+//		oldciphertext[0] = cx->iv[0];
+//		oldciphertext[1] = cx->iv[1];
 		
-/*		printf("\n iv before computation : \n");
+		//printf("\n iv before computation : \n");
+/*
 		str = (unsigned char*)&oldciphertext;
 		for(j=0; j<8; j++)
 		{
 			printf("%.2x ",(unsigned char)str[j]);
 		}
+		printf("|");
 */
 		//COPY8BTOHALF(cx->iv, in);
 		//in += 8;
@@ -852,13 +855,14 @@ int DES_EDE3CBCDe(DESContext *cx, const BYTE *in)
 */		
 		plaintext[0] =plaintext[0] ^  cx->iv[0];
 		plaintext[1] =plaintext[1] ^  cx->iv[1];
-/*
-		printf("\n final plaintext after XOR is : \n ");
+
+//		printf("\n final plaintext after XOR is : \n ");
+/*		
 		str = (unsigned char*)&plaintext;
 		for(j=0; j<8; j++)
 			printf("%.2x ",(unsigned char)str[j]);
 		printf("\n ");
-		
+/*		
 		for(j=0; j<8; j++)
 			printf("%c ",(unsigned char)str[j]);
 */

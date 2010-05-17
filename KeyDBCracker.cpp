@@ -114,7 +114,7 @@ char off[2] = {0, 0};
 	
 	fseek(keyFile, globalSaltOffset, SEEK_SET);
 
-	keyCrackData.globalSaltLen = 16;
+	keyCrackData.globalSaltLen = 20;
 	if( fread(&keyCrackData.globalSalt, keyCrackData.globalSaltLen, 1, keyFile) < 1)
 	{
 		printf("\n Error in reading salt data from %s file",KEYDB_FILENAME);
@@ -137,12 +137,22 @@ char off[2] = {0, 0};
 		//Read the global salt again...
 		fseek(keyFile, globalSaltOffset, SEEK_SET);
 
-		keyCrackData.globalSaltLen = 16;
+		keyCrackData.globalSaltLen = 24;
 		if( fread(&keyCrackData.globalSalt, keyCrackData.globalSaltLen, 1, keyFile) < 1)
 		{
 			printf("\n Error in reading salt data from %s file",KEYDB_FILENAME);
 			return FALSE;
 		}
+
+		//For version 3.5 onwards global salt length is changed to 20 from 16
+		//One simple way to check this is to verify where the global-salt string 
+		//begins which follows immediately after the global salt data....
+		if( keyCrackData.globalSalt[20] == 'g' && keyCrackData.globalSalt[21] == 'l' )
+			keyCrackData.globalSaltLen = 20;
+		else
+			keyCrackData.globalSaltLen = 16;
+
+		//printf("\n Global salt length after adjustment %d", keyCrackData.globalSaltLen);	
 
 		keyCrackData.globalSalt[keyCrackData.globalSaltLen]=0;
 	}
@@ -235,7 +245,7 @@ char off[2] = {0, 0};
 	
 	*/
 	fclose(keyFile);
-
+	
 	return TRUE;
 }
 
