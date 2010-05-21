@@ -1,5 +1,5 @@
-XUL_INCLUDE = -I/home/m107038/Documents/RNP/firemaster/gecko_sdk/xulrunner-sdk/include/
-XUL_LIB = -L/home/m107038/Documents/RNP/firemaster/gecko_sdk/xulrunner-sdk/lib/
+XUL_INCLUDE = -I/home/me/Documents/RNP/xulrunner-sdk/include/
+XUL_LIB = -L/home/me/Documents/RNP/xulrunner-sdk/lib/
 
 all: firemaster
 
