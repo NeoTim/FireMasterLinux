@@ -10,6 +10,7 @@ void usage();
 static int CheckMasterPassword(char*);
 int FireMasterInit(char *);
 void BruteCrack(const char *, char *, const int, int);
+void parseArgs(int, char **);
 /**** End Function Prototypes ***/
 
 
@@ -27,36 +28,60 @@ int brutePosMinCount=-1;
 const char* bruteCharSet = "";
 // Pattern Cracking
 char *brutePattern=NULL;
-char brutePatternBitmap[MAX_PASSWORD_LENGTH];
+int brutePatternBitmap[MAX_PASSWORD_LENGTH];
 
 /************ End GLobal Declarations ************/
 
 int main(int argc, char* argv[]){
 	
 	char* patternmatch;
-	char* profileDir = "/home/me/.mozilla/firefox/o4u8k1aq.default/";
+	char* profileDir = argv[1];
+	if (profileDir[0] != '/'){
+		printf("\nPlease input the absolute directory of the firefox profile as argument 1\n");
+		usage();
+	}
+
 	int i;
 
 	FireMasterInit(profileDir);
 
-	// Parse arguments
-	for (int i = 1; i < argc; i++){
+	parseArgs(argc, argv);
+
+	// Let the user know what they're cracking
+	printf("Parameters supplied:\n");
+	printf("\tCharacter Set = %s\n", bruteCharSet);
+	printf("\tMinimum password length = %i\n", brutePosMinCount);
+	printf("\tMaximum password length = %i\n", brutePosMaxCount);
+	printf("\tPattern to crack = %s\n", brutePattern);
+	
+	char brutePassword[MAX_PASSWORD_LENGTH]="";
+	BruteCrack(bruteCharSet, brutePassword, 0, 0);
+
+	printf("\n%s\n", "No Luck: try again with better options");
+
+	return 0;		
+}
+
+void parseArgs(int argc, char* argv[]){
+	
+	// Start at two, since argv[1] is the profile directory
+	for (int i = 2; i < argc; i++){
 		if ((strcmp(argv[i], "-l")==0) && (i+1<argc)){
 			brutePosMaxCount = atoi(argv[++i]);
 			if (!((brutePosMaxCount > 0) && (brutePosMaxCount <= MAX_PASSWORD_LENGTH))) 
 				usage();
-			printf("Maximum password length = %i\n", brutePosMaxCount);
 		}
 		else if ((strcmp(argv[i], "-m")==0) && (i+1<argc)){
 			brutePosMinCount = atoi(argv[++i]);
-			if (!((brutePosMaxCount > 0) && (brutePosMinCount > 0) && (brutePosMinCount <= MAX_PASSWORD_LENGTH) && (brutePosMinCount<=brutePosMaxCount)))
+			if (!((brutePosMinCount > 0) && (brutePosMinCount <= MAX_PASSWORD_LENGTH) && (brutePosMinCount<=brutePosMaxCount)))
 				usage();
-			printf("Minimum password length = %i\n", brutePosMinCount);
 		}
 		else if ((strcmp(argv[i], "-c")==0) && (i+1<argc))
 			bruteCharSet = argv[++i];
-		else if ((strcmp(argv[i], "-p")==0) && (i+1<argc))
+		else if ((strcmp(argv[i], "-p")==0) && (i+1<argc)){
 			brutePattern = argv[++i];
+			printf("Brute Pattern set... %s\n", brutePattern);
+		}
 		else usage();
 	}
 
@@ -64,15 +89,40 @@ int main(int argc, char* argv[]){
 	if (strlen(bruteCharSet) == 0)
 		bruteCharSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	bruteCharCount = strlen(bruteCharSet);
+
+	// Pattern Matching
+	if (brutePattern != NULL){
+		int i;
+		brutePosMaxCount = strlen(brutePattern);
+		for(i=0; i< brutePosMaxCount; i++)
+		{
+			if( brutePattern[i] == '*' )
+				brutePatternBitmap[i] = 0;
+			else
+				brutePatternBitmap[i] = 1;
+		}
+		brutePatternBitmap[i]=0; // Null terminate the string
+	}
+
+	// Default lengths
+	if (brutePosMinCount < 0)
+		brutePosMinCount = 1;
+	if (brutePosMaxCount < 0){
+		brutePosMaxCount = MAX_PASSWORD_LENGTH;	
+		printf("WARNING: You have not specified a max password length, which is wildly inefficient. Supply one now? (y/n)\n");
+		char yesno;
+		scanf("%c", &yesno);
+		if ((yesno == 'y') || (yesno == 'Y')){
+			printf("Enter the max password length:\n");
+			scanf("%i", &brutePosMaxCount);
+		}
+		else if ((yesno == 'n') || (yesno == 'N'))
+			printf("If you insist...\n");
+		else exit(3);
+	}
 	
-	printf("Character Set = %s\n", bruteCharSet);
-
-	char brutePassword[MAX_PASSWORD_LENGTH]="";
-	BruteCrack(bruteCharSet, brutePassword, 0, 0);
-
-	printf("\n%s\n", "No Luck: try again with better options");
-
-	return 0;		
+	
+	
 }
 
 void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, int next )
@@ -87,18 +137,17 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 			brutePasswd[index] = bruteCharSet[next%bruteCharCount];
 			brutePasswd[index+1] = 0;
 			next++;
-		
-			// printf("%s\n", brutePasswd);
-		
-			if( CheckMasterPassword(brutePasswd) )
+			
+			if( index >= (brutePosMinCount-1) )
 			{
-				printf("\nPassword: \t\"%s\"\n", brutePasswd);
-				exit(0);
+				//printf("%s\n", brutePasswd);
+				if( CheckMasterPassword(brutePasswd) )
+				{
+					printf("\nPassword: \t\"%s\"\n", brutePasswd);
+					exit(0);
+				}
 			}
-
-			BruteCrack(bruteCharSet, brutePasswd,index+1, next);
 		}
-		/*
 		else{
 			if( brutePatternBitmap[index] == 1 )
 				brutePasswd[index] = brutePattern[index];
@@ -110,20 +159,19 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 			if( index == (brutePosMaxCount-1) )
 			{
 				brutePasswd[index+1] = 0;
-				bruteCount++;
 			
-				if( !isQuiet )
-					printf("\n%.0lf = Attempting %s ", bruteCount, brutePasswd);
-			
-				//Finally check if we have found the master password....			
+				//printf("%s\n", brutePasswd);
+		
 				if( CheckMasterPassword(brutePasswd) )
 				{
-					PrintPassword(brutePasswd);
-					FireMasterExit();
+					printf("\nPassword: \t\"%s\"\n", brutePasswd);
+					exit(0);
 				}
 			}
 		}
-		*/
+		BruteCrack(bruteCharSet, brutePasswd,index+1, next);
+		if( brutePatternBitmap[index] == 1 )
+			break;
 	}
 }
 
@@ -149,9 +197,8 @@ void usage(){
 	printf("Options:\n");	
 	printf("\t-l\tmaximum length of password, not to exceed 128\n");
 	printf("\t-m\tminimum length of password\n");
-	printf("\t-p\tpattern to use for cracking (i.e. 'p???word')\n");
+	printf("\t-p\tpattern to use for cracking - use single quotes (i.e. 'p***word')\n");
 	printf("\t-c\tcharacter set to use for cracking (i.e. 'abcABC')\n");
-	printf("\t\t(single quotes only necessary if bash special operators are in the character set)\n");  
 	printf("\n");
 	exit(2);	
 }
