@@ -29,6 +29,7 @@ const char* bruteCharSet = "";
 // Pattern Cracking
 char *brutePattern=NULL;
 int brutePatternBitmap[MAX_PASSWORD_LENGTH];
+bool isQuiet = false;
 
 /************ End GLobal Declarations ************/
 
@@ -82,6 +83,8 @@ void parseArgs(int argc, char* argv[]){
 			brutePattern = argv[++i];
 			printf("Brute Pattern set... %s\n", brutePattern);
 		}
+		else if ((strcmp(argv[i], "-q")==0))
+			isQuiet = true;
 		else usage();
 	}
 
@@ -140,7 +143,8 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 			
 			if( index >= (brutePosMinCount-1) )
 			{
-				//printf("%s\n", brutePasswd);
+				if(!isQuiet)
+					printf("%s\n", brutePasswd);
 				if( CheckMasterPassword(brutePasswd) )
 				{
 					printf("\nPassword: \t\"%s\"\n", brutePasswd);
@@ -160,7 +164,8 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 			{
 				brutePasswd[index+1] = 0;
 			
-				//printf("%s\n", brutePasswd);
+				if(!isQuiet)
+					printf("%s\n", brutePasswd);
 		
 				if( CheckMasterPassword(brutePasswd) )
 				{
