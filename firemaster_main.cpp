@@ -11,11 +11,15 @@ static int CheckMasterPassword(char*);
 int FireMasterInit(char *);
 void BruteCrack(const char *, char *, const int, int);
 void parseArgs(int, char **);
+void DictCrack(char *);
 /**** End Function Prototypes ***/
 
 
 /************* GLobal Declarations **************/
 
+// General Control
+bool isQuiet = false;
+int crackMethod = -1;
 // Database items
 SHA1Context pctx;
 unsigned char encString[128];
@@ -26,10 +30,15 @@ int bruteCharCount;
 int brutePosMaxCount=-1;
 int brutePosMinCount=-1;
 const char* bruteCharSet = "";
+char brutePassword[MAX_PASSWORD_LENGTH]="";
 // Pattern Cracking
 char *brutePattern=NULL;
 int brutePatternBitmap[MAX_PASSWORD_LENGTH];
-bool isQuiet = false;
+// Dictionary Cracking
+char dictPasswd[256];
+char fileBuffer[51200];
+int fileBufferSize = 51200;
+char *dictionaryFile;
 
 /************ End GLobal Declarations ************/
 
@@ -48,26 +57,44 @@ int main(int argc, char* argv[]){
 
 	parseArgs(argc, argv);
 
-	// Let the user know what they're cracking
-	printf("Parameters supplied:\n");
-	printf("\tCharacter Set = %s\n", bruteCharSet);
-	printf("\tMinimum password length = %i\n", brutePosMinCount);
-	printf("\tMaximum password length = %i\n", brutePosMaxCount);
-	printf("\tPattern to crack = %s\n", brutePattern);
+	switch(crackMethod){
+		case 0:
+			// Let the user know what they're cracking
+			printf("Parameters supplied:\n");
+			printf("\tCharacter Set = %s\n", bruteCharSet);
+			printf("\tMinimum password length = %i\n", brutePosMinCount);
+			printf("\tMaximum password length = %i\n", brutePosMaxCount);
+			printf("\tPattern to crack = %s\n", brutePattern);
 	
-	char brutePassword[MAX_PASSWORD_LENGTH]="";
-	BruteCrack(bruteCharSet, brutePassword, 0, 0);
-
+			BruteCrack(bruteCharSet, brutePassword, 0, 0);
+			break;
+		case 1:
+			printf("Parameters supplied:\n");
+			printf("\tDictionary File = %s\n", dictionaryFile);
+			DictCrack(dictionaryFile);
+			break;
+		case 2:
+			printf("Still working on this...\n");
+			exit(0);
+		default:
+			printf("Please specify a crack method using either -b (bruteforce), -d (dictionary), or -h (hybrid)\n");
+			break;
+	}
 	printf("\n%s\n", "No Luck: try again with better options");
 
 	return 0;		
 }
-
 void parseArgs(int argc, char* argv[]){
 	
 	// Start at two, since argv[1] is the profile directory
 	for (int i = 2; i < argc; i++){
-		if ((strcmp(argv[i], "-l")==0) && (i+1<argc)){
+		if ((strcmp(argv[i], "-b")==0))
+			crackMethod = 0;
+		else if ((strcmp(argv[i], "-d")==0))
+			crackMethod = 1;
+		else if ((strcmp(argv[i], "-h")==0))
+			crackMethod = 2;
+		else if ((strcmp(argv[i], "-l")==0) && (i+1<argc)){
 			brutePosMaxCount = atoi(argv[++i]);
 			if (!((brutePosMaxCount > 0) && (brutePosMaxCount <= MAX_PASSWORD_LENGTH))) 
 				usage();
@@ -79,6 +106,8 @@ void parseArgs(int argc, char* argv[]){
 		}
 		else if ((strcmp(argv[i], "-c")==0) && (i+1<argc))
 			bruteCharSet = argv[++i];
+		else if ((strcmp(argv[i], "-f")==0) && (i+1<argc))
+			dictionaryFile = argv[++i];
 		else if ((strcmp(argv[i], "-p")==0) && (i+1<argc)){
 			brutePattern = argv[++i];
 			printf("Brute Pattern set... %s\n", brutePattern);
@@ -88,45 +117,132 @@ void parseArgs(int argc, char* argv[]){
 		else usage();
 	}
 
-	// Default bruteCharSet
-	if (strlen(bruteCharSet) == 0)
-		bruteCharSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	bruteCharCount = strlen(bruteCharSet);
+	if (crackMethod == 0){
+		// Default bruteCharSet
+		if (strlen(bruteCharSet) == 0)
+			bruteCharSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		bruteCharCount = strlen(bruteCharSet);
 
-	// Pattern Matching
-	if (brutePattern != NULL){
-		int i;
-		brutePosMaxCount = strlen(brutePattern);
-		for(i=0; i< brutePosMaxCount; i++)
-		{
-			if( brutePattern[i] == '*' )
-				brutePatternBitmap[i] = 0;
-			else
-				brutePatternBitmap[i] = 1;
+		// Pattern Matching
+		if (brutePattern != NULL){
+			int i;
+			brutePosMaxCount = strlen(brutePattern);
+			for(i=0; i< brutePosMaxCount; i++)
+			{
+				if( brutePattern[i] == '*' )
+					brutePatternBitmap[i] = 0;
+				else
+					brutePatternBitmap[i] = 1;
+			}
+			brutePatternBitmap[i]=0; // Null terminate the string
 		}
-		brutePatternBitmap[i]=0; // Null terminate the string
-	}
 
-	// Default lengths
-	if (brutePosMinCount < 0)
-		brutePosMinCount = 1;
-	if (brutePosMaxCount < 0){
-		brutePosMaxCount = MAX_PASSWORD_LENGTH;	
-		printf("WARNING: You have not specified a max password length, which is wildly inefficient. Supply one now? (y/n)\n");
-		char yesno;
-		scanf("%c", &yesno);
-		if ((yesno == 'y') || (yesno == 'Y')){
-			printf("Enter the max password length:\n");
-			scanf("%i", &brutePosMaxCount);
+		// Default lengths
+		if (brutePosMinCount < 0)
+			brutePosMinCount = 1;
+		if (brutePosMaxCount < 0){
+			brutePosMaxCount = MAX_PASSWORD_LENGTH;	
+			printf("WARNING: You have not specified a max password length, which is wildly inefficient. Supply one now? (y/n)\n");
+			char yesno;
+			scanf("%c", &yesno);
+			if ((yesno == 'y') || (yesno == 'Y')){
+				printf("Enter the max password length:\n");
+				scanf("%i", &brutePosMaxCount);
+			}
+			else if ((yesno == 'n') || (yesno == 'N')){
+				printf("If you insist...\n");
+				sleep(1);
+			}
+			else exit(3);
 		}
-		else if ((yesno == 'n') || (yesno == 'N'))
-			printf("If you insist...\n");
-		else exit(3);
 	}
-	
-	
 	
 }
+
+void DictCrack(char *dictFile)
+{
+	
+	FILE *f = NULL;
+	int index, fileOffset=0;
+	int i,j,readCount;
+	int isLastBlock;
+
+	f = fopen(dictFile, "rb");
+
+    if( !f )
+	{
+		printf("Error opening dictionary file \n");
+		return;
+	}
+
+	fileOffset = 0;
+
+    do
+	{   
+		// read bulk data from file....
+		readCount = fread(fileBuffer, 1,fileBufferSize, f);
+
+		if( readCount == 0 )
+			break;
+		
+		// If we have read less chars..then this is the last block...
+		if( readCount < fileBufferSize )
+			isLastBlock = 1;
+		else
+			isLastBlock = 0;
+		
+		index = 0;
+		
+		// check if the begining contains 10,13 chars..if so just skip them...
+		for(index=0; index < readCount && (fileBuffer[index]==13 || fileBuffer[index]==10) ; index++);
+
+		do  
+		{
+		
+			// Go through the file buffer..extracting each password....
+			dictPasswd[0]=0;
+			
+			for(i=index,j=0; i < readCount && fileBuffer[i] != 10 ; i++,j++)
+				dictPasswd[j]=fileBuffer[i];
+
+			dictPasswd[j]=0;
+
+			// check if reading finished before '13' i.e we hit the wall
+			if( i >= readCount && !( isLastBlock && dictPasswd[0]!=0) )
+			{
+				
+				if(fileBuffer[i] != 10 )
+				{
+					fileOffset += index;
+					fseek(f, index-readCount,SEEK_CUR);  // negative makes it to move backward
+				}
+				else
+				{
+					fileOffset +=readCount;
+				}
+				
+				break;
+			}
+		
+			index += strlen(dictPasswd) + 1;
+	
+			if (!isQuiet)
+				printf("%s\n", dictPasswd);		 
+			if( CheckMasterPassword(dictPasswd) )
+			{
+				printf("Password:\t \"%s\"\n", dictPasswd);
+				fclose(f);
+				exit(0);
+			}
+		}
+		while(1);
+    }
+	while(1); 
+    
+	fclose(f);
+}
+
+
 
 void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, int next )
 {	
