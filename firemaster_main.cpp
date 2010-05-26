@@ -2,6 +2,7 @@
 #include "lowpbe.h"
 #include "sha_fast.h"
 #include <unistd.h>
+#include <time.h>
 
 #define MAX_PASSWORD LENGTH 128
 
@@ -39,6 +40,9 @@ char dictPasswd[256];
 char fileBuffer[51200];
 int fileBufferSize = 51200;
 char *dictionaryFile;
+// Performance monitoring
+long bruteCount = 0;
+time_t start, end;
 
 /************ End GLobal Declarations ************/
 
@@ -56,7 +60,7 @@ int main(int argc, char* argv[]){
 	FireMasterInit(profileDir);
 
 	parseArgs(argc, argv);
-
+	time(&start);
 	switch(crackMethod){
 		case 0:
 			// Let the user know what they're cracking
@@ -65,7 +69,7 @@ int main(int argc, char* argv[]){
 			printf("\tMinimum password length = %i\n", brutePosMinCount);
 			printf("\tMaximum password length = %i\n", brutePosMaxCount);
 			printf("\tPattern to crack = %s\n", brutePattern);
-	
+			
 			BruteCrack(bruteCharSet, brutePassword, 0, 0);
 			break;
 		case 1:
@@ -261,9 +265,12 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 			{
 				if(!isQuiet)
 					printf("%s\n", brutePasswd);
+				bruteCount++;
 				if( CheckMasterPassword(brutePasswd) )
 				{
-					printf("\nPassword: \t\"%s\"\n", brutePasswd);
+					time(&end);
+					int diff = difftime(end,start);
+					printf("\nPassword: \t\"%s\"\tElapsed Time: %d \tCracks/sec: %d\n", brutePasswd, diff, bruteCount/diff);
 					exit(0);
 				}
 			}
@@ -282,10 +289,12 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 			
 				if(!isQuiet)
 					printf("%s\n", brutePasswd);
-		
+				bruteCount++;
 				if( CheckMasterPassword(brutePasswd) )
 				{
-					printf("\nPassword: \t\"%s\"\n", brutePasswd);
+					time(&end);
+					int diff = difftime(end,start);
+					printf("\nPassword: \t\"%s\"\tElapsed Time: %d \tCracks/sec: %d\n", brutePasswd, diff, bruteCount/diff);
 					exit(0);
 				}
 			}
