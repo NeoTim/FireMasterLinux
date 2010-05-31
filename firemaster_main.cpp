@@ -238,6 +238,10 @@ void DictCrack(char *dictFile)
 				fclose(f);
 				exit(0);
 			}
+			/*
+			else if (isHybrid)
+				HybridCrack(dictPasswd);
+			*/
 		}
 		while(1);
     }
@@ -245,6 +249,8 @@ void DictCrack(char *dictFile)
     
 	fclose(f);
 }
+
+
 
 
 
