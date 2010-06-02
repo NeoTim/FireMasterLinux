@@ -40,6 +40,8 @@ char dictPasswd[256];
 char fileBuffer[51200];
 int fileBufferSize = 51200;
 char *dictionaryFile;
+// Hybrid Cracking
+int hybridCrackMode = 0;	// Defaults to chracter shift 
 // Performance monitoring
 long bruteCount = 0;
 time_t start, end;
@@ -238,10 +240,10 @@ void DictCrack(char *dictFile)
 				fclose(f);
 				exit(0);
 			}
-			/*
-			else if (isHybrid)
-				HybridCrack(dictPasswd);
-			*/
+			
+			if (isHybrid)
+				HybridCrack(dictPasswd, hybridCrackMode);
+			
 		}
 		while(1);
     }
@@ -249,6 +251,46 @@ void DictCrack(char *dictFile)
     
 	fclose(f);
 }
+
+void HybridCrack(char *hybridPassword){
+
+	for (int i = strlen(hybridPasswd)-1; i>=0 ; i--){
+		
+	}
+}
+
+char shiftCase(char c){
+	/* 	
+		0-9    	= 48-57
+		!-)	= 33,64,35,36,37,94,38,42,40,41
+
+	 	a-z    	= 97-122
+	 	A-Z   	= 65-90
+	 	
+		`  ~   	= 96-126
+		-  _   	= 45-95
+		=  +   	= 61-43		
+		[  {   	= 91-123
+		]  }   	= 93-125
+		;  :   	= 59-58
+		'  "   	= 39-34
+		,  <   	= 44-60
+		.  >   	= 46-62
+		/  ?   	= 47-63
+		\  |   	= 92-124
+	*/
+
+	int numValue = (int)c;
+	
+	// Caps	
+	if ((numValue >= 97) && (numValue <=122))
+		return c-32;
+	if ((numValue >= 65) && (numValue <= 90))
+		return c+32;
+
+	switch(	 	
+
+} 
 
 
 
@@ -329,12 +371,19 @@ static int CheckMasterPassword(char *password)
 
 
 void usage(){
-	printf("Usage\n\t./firemaster_linux [firefox profile directory] [options]\n\n");	
-	printf("Options:\n");	
+	printf("Usage\n\t./firemaster_linux [firefox profile directory] [crack type] [options]\n\n");	
+	printf("Brute Force Options:\t(-b)\n");	
 	printf("\t-l\tmaximum length of password, not to exceed 128\n");
 	printf("\t-m\tminimum length of password\n");
 	printf("\t-p\tpattern to use for cracking - use single quotes (i.e. 'p***word')\n");
-	printf("\t-c\tcharacter set to use for cracking (i.e. 'abcABC')\n");
+	printf("\t-c\tcharacter set to use for cracking (i.e. 'abcABC')\n\n");
+	printf("Dictionary Options:\t(-d)\n");	
+	printf("\t-f\tdictionary file to use for cracking\n\n");
+	printf("Hybrid Crack Options:\t(-h)\n");
+	printf("\t-f\tdictionary file to use for hybrid modification\n");	
+	printf("\t-0\tshift Cracking on individual characters i.e. 'a'->'A' '1'->'!'\n");
+	printf("\t-1\tprefix i.e. 'pass' -> '1pass' \n");
+	printf("\t-2\tpppend i.e. 'pass' -> 'pass2' \n");
 	printf("\n");
 	exit(2);	
 }
