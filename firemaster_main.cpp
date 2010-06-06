@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define MAX_PASSWORD LENGTH 128
+#define MAX_PASSWORD_LENGTH 128
 
 /***** Function Prototypes ******/
 void usage();
