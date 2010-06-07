@@ -13,6 +13,8 @@ int FireMasterInit(char *);
 void BruteCrack(const char *, char *, const int, int);
 void parseArgs(int, char **);
 void DictCrack(char *);
+void HybridCrack(char *);
+char shiftCase(char);
 /**** End Function Prototypes ***/
 
 
@@ -42,6 +44,7 @@ int fileBufferSize = 51200;
 char *dictionaryFile;
 // Hybrid Cracking
 int hybridCrackMode = 0;	// Defaults to chracter shift 
+bool isHybrid = false;
 // Performance monitoring
 long bruteCount = 0;
 time_t start, end;
@@ -80,7 +83,11 @@ int main(int argc, char* argv[]){
 			DictCrack(dictionaryFile);
 			break;
 		case 2:
-			printf("Still working on this...\n");
+			printf("Parameters supplied:\n");
+			printf("\tCrack Type = Hybrid Crack\n");
+			printf("\tDictionary File = %s\n", dictionaryFile);
+			isHybrid = true;
+			DictCrack(dictionaryFile);
 			exit(0);
 		default:
 			printf("Please specify a crack method using either -b (bruteforce), -d (dictionary), or -h (hybrid)\n");
@@ -242,7 +249,7 @@ void DictCrack(char *dictFile)
 			}
 			
 			if (isHybrid)
-				HybridCrack(dictPasswd, hybridCrackMode);
+				HybridCrack(dictPasswd);
 			
 		}
 		while(1);
@@ -253,44 +260,121 @@ void DictCrack(char *dictFile)
 }
 
 void HybridCrack(char *hybridPassword){
-
-	for (int i = strlen(hybridPasswd)-1; i>=0 ; i--){
-		
-	}
+	for (int i = strlen(hybridPassword)-1; i>=0; i--){
+		hybridPassword[i] = shiftCase(hybridPassword[i]);
+		printf("%s\n", hybridPassword);		
+		if (CheckMasterPassword(hybridPassword)){
+			printf("Password:\t \"%s\"\n", hybridPassword);
+			exit(0);
+		}
+	}	
 }
 
 char shiftCase(char c){
-	/* 	
-		0-9    	= 48-57
-		!-)	= 33,64,35,36,37,94,38,42,40,41
+/*
+CAPS
+a-z = 97-122
+A-Z = 65-90
 
-	 	a-z    	= 97-122
-	 	A-Z   	= 65-90
-	 	
-		`  ~   	= 96-126
-		-  _   	= 45-95
-		=  +   	= 61-43		
-		[  {   	= 91-123
-		]  }   	= 93-125
-		;  :   	= 59-58
-		'  "   	= 39-34
-		,  <   	= 44-60
-		.  >   	= 46-62
-		/  ?   	= 47-63
-		\  |   	= 92-124
-	*/
+NUMBER ROW
+0-9 = 48-57
+!-) = 33,64,35,36,37,94,38,42,40,41
+' " = 39-34
 
-	int numValue = (int)c;
-	
-	// Caps	
+RANDOMS
+` ~ = 96-126
+- _ = 45-95
+= + = 61-43
+[ { = 91-123
+] } = 93-125
+; : = 59-58
+
+, < = 44-60
+. > = 46-62
+/ ? = 47-63
+\ | = 92-124
+*/
+
+int numValue = (int)c;
+
+	// Caps
 	if ((numValue >= 97) && (numValue <=122))
 		return c-32;
-	if ((numValue >= 65) && (numValue <= 90))
+	else if ((numValue >= 65) && (numValue <= 90))
 		return c+32;
 
-	switch(	 	
+	// number row
+	else if( ((numValue >= 33) && (numValue <= 42)) || ((numValue >= 48) && (numValue <= 57)) || (numValue == 64) || (numValue ==94) ){
+	// 1,3-5 <-> !#$%
+		if ((numValue == 49) || ((numValue >=51) && (numValue <= 53)))
+			return c-16;
+		if ((numValue == 33) || ((numValue >=35) && (numValue <= 37)))
+			return c+16;
+		// 2 <-> @
+		switch(numValue){
+			// 6 <-> ^	
+			case 50: return 64; break;
+			case 64: return 50; break;
+		
+			case 54: return 94; break;
+			case 94: return 54; break;
+			// 7 <-> &
+			case 55: return 38; break;
+			case 38: return 55; break;
+			// 8 <-> *
+			case 56: return 42; break;
+			case 42: return 56; break;
+			// 9 <-> (
+			case 57: return 40; break;
+			case 40: return 57; break;
+			// 0 <-> )
+			case 48: return 41; break;
+			case 41: return 48; break;
+			// ' <-> "
+			case 39: return 34; break;
+			case 34: return 39; break;
+		}
+	}
 
-} 
+	// randoms
+	else if( ((numValue >= 43) && (numValue <= 126))){
+		// ` <-> ~
+		switch(numValue){
+			case 96: return 126; break;
+			case 126: return 96; break;
+			// - <-> _
+			case 45: return 95; break;
+			case 95: return 45; break;
+			// = <-> +
+			case 61: return 43; break;
+			case 43: return 61; break;
+			// [ <-> {
+			case 91: return 123; break;
+			case 123: return 91; break;
+			// ] <-> }
+			case 93: return 125; break;
+			case 125: return 93; break;
+			// ; <-> :
+			case 59: return 58; break;
+			case 58: return 59; break;
+			// , <-> <
+			case 44: return 60; break;
+			case 60: return 44; break;
+			// . <-> >
+			case 46: return 62; break;
+			case 62: return 46; break;
+			// / <-> ?
+			case 47: return 63; break;
+			case 63: return 47; break;
+			// \ <-> | = 92-124
+			case 92: return 124; break;
+			case 124: return 92; break;
+		}
+	}
+
+	//if not a value to be shifted, then return the origional value
+	return c;
+}
 
 
 

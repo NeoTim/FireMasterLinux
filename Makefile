@@ -1,5 +1,5 @@
-XUL_INCLUDE = -I/home/chris/Documents/RNP/xulrunner-sdk/include/
-XUL_LIB = -L/home/chris/Documents/RNP/xulrunner-sdk/lib/
+XUL_INCLUDE = -I/home/me/Documents/RNP/xulrunner-sdk/include/
+XUL_LIB = -L/home/me/Documents/RNP/xulrunner-sdk/lib/
 GCC_FLAGS = -O5
 
 all: firemaster
