@@ -14,7 +14,7 @@ void BruteCrack(const char *, char *, const int, int);
 void parseArgs(int, char **);
 void DictCrack(char *);
 void HybridCrack(char *);
-char shiftCase(char);
+void shiftCase(char&);
 /**** End Function Prototypes ***/
 
 
@@ -35,7 +35,7 @@ int brutePosMinCount=-1;
 const char* bruteCharSet = "";
 char brutePassword[MAX_PASSWORD_LENGTH]="";
 // Pattern Cracking
-char *brutePattern=NULL;
+char brutePattern[128];
 int brutePatternBitmap[MAX_PASSWORD_LENGTH];
 // Dictionary Cracking
 char dictPasswd[256];
@@ -45,6 +45,7 @@ char *dictionaryFile;
 // Hybrid Cracking
 int hybridCrackMode = 0;	// Defaults to chracter shift 
 bool isHybrid = false;
+int extraChars;
 // Performance monitoring
 long bruteCount = 0;
 time_t start, end;
@@ -52,11 +53,11 @@ time_t start, end;
 /************ End GLobal Declarations ************/
 
 int main(int argc, char* argv[]){
-	
+
 	char* patternmatch;
 	char* profileDir = argv[1];
-	if (profileDir[0] != '/'){
-		printf("\nPlease input the absolute directory of the firefox profile as argument 1\n");
+	if ((argc < 2)|| (profileDir[0] != '/')){
+		printf("\nPlease input the absolute directory of the firefox profile as argument 1\n\n");
 		usage();
 	}
 
@@ -84,8 +85,10 @@ int main(int argc, char* argv[]){
 			break;
 		case 2:
 			printf("Parameters supplied:\n");
-			printf("\tCrack Type = Hybrid Crack\n");
+			printf("\tHybrid Crack Type = %d\n", hybridCrackMode);
 			printf("\tDictionary File = %s\n", dictionaryFile);
+			printf("\tAppend/Prefix character set = %s\n", bruteCharSet);
+			printf("\t# Characters to Append/Prefix = %i\n", extraChars);
 			isHybrid = true;
 			DictCrack(dictionaryFile);
 			exit(0);
@@ -107,6 +110,10 @@ void parseArgs(int argc, char* argv[]){
 			crackMethod = 1;
 		else if ((strcmp(argv[i], "-h")==0))
 			crackMethod = 2;
+		else if ((strcmp(argv[i], "-1")==0))
+			hybridCrackMode = 1;
+		else if ((strcmp(argv[i], "-2")==0))
+			hybridCrackMode = 2;
 		else if ((strcmp(argv[i], "-l")==0) && (i+1<argc)){
 			brutePosMaxCount = atoi(argv[++i]);
 			if (!((brutePosMaxCount > 0) && (brutePosMaxCount <= MAX_PASSWORD_LENGTH))) 
@@ -122,11 +129,14 @@ void parseArgs(int argc, char* argv[]){
 		else if ((strcmp(argv[i], "-f")==0) && (i+1<argc))
 			dictionaryFile = argv[++i];
 		else if ((strcmp(argv[i], "-p")==0) && (i+1<argc)){
-			brutePattern = argv[++i];
+			strcpy(brutePattern, argv[++i]);
 			printf("Brute Pattern set... %s\n", brutePattern);
 		}
+		else if ((strcmp(argv[i], "-a")==0) && (i+1<argc))
+			extraChars = atoi(argv[++i]);
 		else if ((strcmp(argv[i], "-q")==0))
 			isQuiet = true;
+		
 		else usage();
 	}
 
@@ -167,6 +177,25 @@ void parseArgs(int argc, char* argv[]){
 				sleep(1);
 			}
 			else exit(3);
+		}
+	}
+	if (crackMethod == 2){
+		if (dictionaryFile == NULL)
+			usage();
+
+		switch(hybridCrackMode){
+			case 0:
+				break;
+			case 1:
+				if ((bruteCharSet == NULL)||(extraChars == NULL))
+					usage();
+				bruteCharCount = strlen(bruteCharSet);
+				break;
+			case 2:
+				if ((bruteCharSet == NULL)||(extraChars == NULL))
+					usage();
+				bruteCharCount = strlen(bruteCharSet);
+				break;
 		}
 	}
 	
@@ -260,79 +289,125 @@ void DictCrack(char *dictFile)
 }
 
 void HybridCrack(char *hybridPassword){
-	for (int i = strlen(hybridPassword)-1; i>=0; i--){
-		hybridPassword[i] = shiftCase(hybridPassword[i]);
-		printf("%s\n", hybridPassword);		
-		if (CheckMasterPassword(hybridPassword)){
-			printf("Password:\t \"%s\"\n", hybridPassword);
-			exit(0);
-		}
+	int i;
+	int count = 1;
+	int n = strlen(hybridPassword);
+	int bin = 0;
+
+	switch(hybridCrackMode){
+		// Shift Case
+		case 0:														
+			while (count < pow(2, n) ){
+				shiftCase(hybridPassword[n-1]);
+				for (int i = 1; i < n; i++){
+					bin = (int)pow(2,i);
+					if (count % bin == 0)
+						shiftCase(hybridPassword[n-i-1]);	
+				}
+		
+				if (!isQuiet)
+					printf("%s\n", hybridPassword, count);
+
+				if (CheckMasterPassword(hybridPassword)){
+					printf("Password:\t \"%s\"\n", hybridPassword);
+					exit(0);
+				}
+				count++;	
+			}
+			break;
+		// Prefix
+		case 1:														
+			for (i = 0; i< extraChars; i++)
+				brutePattern[i] = '*';		
+			for (i; i< strlen(hybridPassword)+extraChars; i++)
+				brutePattern[i] = hybridPassword[i-extraChars];
+			
+			brutePosMaxCount = strlen(brutePattern);
+			for(i=0; i< brutePosMaxCount; i++)
+			{
+				if( brutePattern[i] == '*' )
+					brutePatternBitmap[i] = 0;
+				else
+					brutePatternBitmap[i] = 1;
+			}
+			brutePatternBitmap[i]=0;
+
+			BruteCrack(bruteCharSet, hybridPassword, 0, 0);
+			break;
+		// Append
+		case 2:														
+			for (i = 0; i< strlen(hybridPassword); i++)
+				brutePattern[i] = hybridPassword[i];
+			for (i; i< strlen(hybridPassword)+extraChars; i++)
+				brutePattern[i] = '*';
+
+			brutePosMaxCount = strlen(brutePattern);
+			for(i=0; i< brutePosMaxCount; i++)
+			{
+				if( brutePattern[i] == '*' )
+					brutePatternBitmap[i] = 0;
+				else
+					brutePatternBitmap[i] = 1;
+			}
+			brutePatternBitmap[i]=0;
+
+			BruteCrack(bruteCharSet, hybridPassword, 0, 0);
+			break;
 	}	
 }
 
-char shiftCase(char c){
-/*
-CAPS
-a-z = 97-122
-A-Z = 65-90
+void shiftCase(char &c){
+/*	CAPS
+	a-z = 97-122	A-Z = 65-90
 
-NUMBER ROW
-0-9 = 48-57
-!-) = 33,64,35,36,37,94,38,42,40,41
-' " = 39-34
+	NUMBER ROW
+	0-9 = 48-57 	!-) = 33,64,35,36,37,94,38,42,40,41		' " = 39-34
 
-RANDOMS
-` ~ = 96-126
-- _ = 45-95
-= + = 61-43
-[ { = 91-123
-] } = 93-125
-; : = 59-58
+	RANDOMS
+	` ~ = 96-126	- _ = 45-95		= + = 61-43
+	[ { = 91-123	] } = 93-125	; : = 59-58
+	, < = 44-60		. > = 46-62		/ ? = 47-63
+	\ | = 92-124  */
 
-, < = 44-60
-. > = 46-62
-/ ? = 47-63
-\ | = 92-124
-*/
-
-int numValue = (int)c;
+	int numValue = (int)c;
 
 	// Caps
 	if ((numValue >= 97) && (numValue <=122))
-		return c-32;
+		c-=32;		
+		//return c-32;
 	else if ((numValue >= 65) && (numValue <= 90))
-		return c+32;
+		c+=32;
 
 	// number row
 	else if( ((numValue >= 33) && (numValue <= 42)) || ((numValue >= 48) && (numValue <= 57)) || (numValue == 64) || (numValue ==94) ){
 	// 1,3-5 <-> !#$%
 		if ((numValue == 49) || ((numValue >=51) && (numValue <= 53)))
-			return c-16;
+			c-=16;
 		if ((numValue == 33) || ((numValue >=35) && (numValue <= 37)))
-			return c+16;
+			c+=16;
 		// 2 <-> @
 		switch(numValue){
 			// 6 <-> ^	
-			case 50: return 64; break;
-			case 64: return 50; break;
+			case 50: c = 64; break;
+			case 64: c = 50; break;
 		
-			case 54: return 94; break;
-			case 94: return 54; break;
+			case 54: c = 94; break;
+			case 94: c = 54; break;
 			// 7 <-> &
-			case 55: return 38; break;
-			case 38: return 55; break;
+			case 55: c = 38; break;
+			case 38: c = 55; break;
 			// 8 <-> *
-			case 56: return 42; break;
-			case 42: return 56; break;
+			case 56: c = 42; break;
+			case 42: c = 56; break;
 			// 9 <-> (
-			case 57: return 40; break;
-			case 40: return 57; break;
+			case 57: c = 40; break;
+			case 40: c = 57; break;
 			// 0 <-> )
-			case 48: return 41; break;
-			case 41: return 48; break;
+			case 48: c = 41; break;
+			case 41: c = 48; break;
 			// ' <-> "
-			case 39: return 34; break;
-			case 34: return 39; break;
+			case 39: c = 34; break;
+			case 34: c = 39; break;
 		}
 	}
 
@@ -340,59 +415,52 @@ int numValue = (int)c;
 	else if( ((numValue >= 43) && (numValue <= 126))){
 		// ` <-> ~
 		switch(numValue){
-			case 96: return 126; break;
-			case 126: return 96; break;
+			case 96: c = 126; break;
+			case 126: c = 96; break;
 			// - <-> _
-			case 45: return 95; break;
-			case 95: return 45; break;
+			case 45: c = 95; break;
+			case 95: c = 45; break;
 			// = <-> +
-			case 61: return 43; break;
-			case 43: return 61; break;
+			case 61: c = 43; break;
+			case 43: c = 61; break;
 			// [ <-> {
-			case 91: return 123; break;
-			case 123: return 91; break;
+			case 91: c = 123; break;
+			case 123: c = 91; break;
 			// ] <-> }
-			case 93: return 125; break;
-			case 125: return 93; break;
+			case 93: c = 125; break;
+			case 125: c = 93; break;
 			// ; <-> :
-			case 59: return 58; break;
-			case 58: return 59; break;
+			case 59: c = 58; break;
+			case 58: c = 59; break;
 			// , <-> <
-			case 44: return 60; break;
-			case 60: return 44; break;
+			case 44: c = 60; break;
+			case 60: c = 44; break;
 			// . <-> >
-			case 46: return 62; break;
-			case 62: return 46; break;
+			case 46: c = 62; break;
+			case 62: c = 46; break;
 			// / <-> ?
-			case 47: return 63; break;
-			case 63: return 47; break;
+			case 47: c = 63; break;
+			case 63: c = 47; break;
 			// \ <-> | = 92-124
-			case 92: return 124; break;
-			case 124: return 92; break;
+			case 92: c = 124; break;
+			case 124: c = 92; break;
 		}
 	}
-
-	//if not a value to be shifted, then return the origional value
-	return c;
+	// if not a value to be shifted, then return the origional value
 }
-
-
-
-
 
 void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, int next )
 {	
 	int i;
-
 	if (index >= brutePosMaxCount) return;
-
 	for(i=0; i< bruteCharCount; i++ )
 	{
-		if (brutePattern == NULL){
+		// Plain Brute Crack
+		if (strlen(brutePattern) == 0){
 			brutePasswd[index] = bruteCharSet[next%bruteCharCount];
 			brutePasswd[index+1] = 0;
 			next++;
-			
+
 			if( index >= (brutePosMinCount-1) )
 			{
 				if(!isQuiet)
@@ -407,6 +475,7 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 				}
 			}
 		}
+		// Patten Matching
 		else{
 			if( brutePatternBitmap[index] == 1 )
 				brutePasswd[index] = brutePattern[index];
@@ -464,10 +533,11 @@ void usage(){
 	printf("Dictionary Options:\t(-d)\n");	
 	printf("\t-f\tdictionary file to use for cracking\n\n");
 	printf("Hybrid Crack Options:\t(-h)\n");
-	printf("\t-f\tdictionary file to use for hybrid modification\n");	
+	printf("\t-f\tdictionary file to use for hybrid modification (defaults to -0)\n");	
 	printf("\t-0\tshift Cracking on individual characters i.e. 'a'->'A' '1'->'!'\n");
 	printf("\t-1\tprefix i.e. 'pass' -> '1pass' \n");
-	printf("\t-2\tpppend i.e. 'pass' -> 'pass2' \n");
+	printf("\t-2\tappend i.e. 'pass' -> 'pass2' \n");
+	printf("\t\t-a\tnumber of characters to append/prefix (required for -1 and -2)\n");	
 	printf("\n");
 	exit(2);	
 }
