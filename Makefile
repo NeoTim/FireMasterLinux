@@ -1,4 +1,4 @@
-XUL_INCLUDE = -I/home/me/Documents/RNP/xulrunner-sdk/include/
+XUL_INCLUDE = -I/home/chris/me/RNP/xulrunner-sdk/include/
 XUL_LIB = -L/home/me/Documents/RNP/xulrunner-sdk/lib/
 GCC_FLAGS = -O5
 
