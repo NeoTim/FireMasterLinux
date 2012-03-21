@@ -1,12 +1,12 @@
 XUL_INCLUDE = -I/home/chris/me/RNP/xulrunner-sdk/include/
 XUL_LIB = -L/home/me/Documents/RNP/xulrunner-sdk/lib/
-GCC_FLAGS = -O5
+GCC_FLAGS = -O5 -Wall -I/usr/include/nspr -I/usr/include/nss
 
 all: firemaster
 
 firemaster: lowpbe.o sha_fast.o firemaster_main.o des.o KeyDBCracker.o
 	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) firemaster_main.o KeyDBCracker.o des.o sha_fast.o lowpbe.o -o firemaster_linux
-	make clean_intermediates	
+	make clean_intermediates
 
 KeyDBCracker.o: KeyDBCracker.cpp
 	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) -c KeyDBCracker.cpp
