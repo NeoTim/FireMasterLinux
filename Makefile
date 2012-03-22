@@ -1,6 +1,6 @@
 XUL_INCLUDE = -I/home/chris/me/RNP/xulrunner-sdk/include/
 XUL_LIB = -L/home/me/Documents/RNP/xulrunner-sdk/lib/
-GCC_FLAGS = -O5 -Wall -I/usr/include/nspr -I/usr/include/nss
+GCC_FLAGS = -O5 -Wall -I/usr/include/nspr -I/usr/include/nspr4 -I/usr/include/nss -I/usr/include/nss3
 
 all: firemaster
 
