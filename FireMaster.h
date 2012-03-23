@@ -24,14 +24,13 @@
 // #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>	
+#include <string.h>
 // #include <conio.h>
 #include <math.h>
 #include <time.h>
 
 
 #include "lowpbe.h"
-#include "sha_fast.h"
 
 
 #ifndef TRUE

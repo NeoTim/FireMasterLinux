@@ -1,30 +1,26 @@
-XUL_INCLUDE = -I/home/chris/me/RNP/xulrunner-sdk/include/
-XUL_LIB = -L/home/me/Documents/RNP/xulrunner-sdk/lib/
-GCC_FLAGS = -O5 -Wall -I/usr/include/nspr -I/usr/include/nspr4 -I/usr/include/nss -I/usr/include/nss3
+GCC_FLAGS = -O5 -Wall `pkg-config --cflags nss` `pkg-config --cflags openssl`
+LD_FLAGS = `pkg-config --libs openssl` `pkg-config --libs nss`
 
 all: firemaster
 
-firemaster: lowpbe.o sha_fast.o firemaster_main.o des.o KeyDBCracker.o
-	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) firemaster_main.o KeyDBCracker.o des.o sha_fast.o lowpbe.o -o firemaster_linux
+firemaster: lowpbe.o firemaster_main.o des.o KeyDBCracker.o
+	g++ $(GCC_FLAGS) firemaster_main.o KeyDBCracker.o des.o lowpbe.o -o firemaster_linux $(LD_FLAGS)
 	make clean_intermediates
 
 KeyDBCracker.o: KeyDBCracker.cpp
-	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) -c KeyDBCracker.cpp
+	g++ $(GCC_FLAGS) -c KeyDBCracker.cpp
 
 des.o: des.cpp
-	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) -c des.cpp
+	g++ $(GCC_FLAGS) -c des.cpp
 
 lowpbe.o: lowpbe.cpp
-	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) -c lowpbe.cpp
-
-sha_fast.o: sha_fast.cpp
-	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) -c sha_fast.cpp
+	g++ $(GCC_FLAGS) -c lowpbe.cpp
 
 firemaster_main.o: firemaster_main.cpp
-	g++ $(GCC_FLAGS) $(XUL_LIB) $(XUL_INCLUDE) -c firemaster_main.cpp
+	g++ $(GCC_FLAGS) -c firemaster_main.cpp
 
 clean_intermediates:
 	rm -rf *.o
 
 clean:
-	rm -f firemaster_linux
+	rm -f firemaster_linux *.o

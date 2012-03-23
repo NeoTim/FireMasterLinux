@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <math.h>
 #include "lowpbe.h"
-#include "sha_fast.h"
+#include "KeyDBCracker.h"
+#include <openssl/sha.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -24,7 +26,7 @@ void shiftCase(char&);
 bool isQuiet = false;
 int crackMethod = -1;
 // Database items
-SHA1Context pctx;
+SHA_CTX pctx;
 unsigned char encString[128];
 NSSPKCS5PBEParameter *paramPKCS5 = NULL;
 KeyCrackData keyCrackData;
@@ -43,7 +45,7 @@ char fileBuffer[51200];
 int fileBufferSize = 51200;
 char *dictionaryFile;
 // Hybrid Cracking
-int hybridCrackMode = 0;	// Defaults to chracter shift 
+int hybridCrackMode = 0;	// Defaults to chracter shift
 bool isHybrid = false;
 int extraChars;
 // Performance monitoring
@@ -75,7 +77,7 @@ int main(int argc, char* argv[]){
 			printf("\tMinimum password length = %i\n", brutePosMinCount);
 			printf("\tMaximum password length = %i\n", brutePosMaxCount);
 			printf("\tPattern to crack = %s\n", brutePattern);
-			
+
 			BruteCrack(bruteCharSet, brutePassword, 0, 0);
 			break;
 		case 1:
@@ -98,10 +100,10 @@ int main(int argc, char* argv[]){
 	}
 	printf("\n%s\n", "No Luck: try again with better options");
 
-	return 0;		
+	return 0;
 }
 void parseArgs(int argc, char* argv[]){
-	
+
 	// Start at two, since argv[1] is the profile directory
 	for (int i = 2; i < argc; i++){
 		if ((strcmp(argv[i], "-b")==0))
@@ -118,7 +120,7 @@ void parseArgs(int argc, char* argv[]){
 			hybridCrackMode = 2;
 		else if ((strcmp(argv[i], "-l")==0) && (i+1<argc)){
 			brutePosMaxCount = atoi(argv[++i]);
-			if (!((brutePosMaxCount > 0) && (brutePosMaxCount <= MAX_PASSWORD_LENGTH))) 
+			if (!((brutePosMaxCount > 0) && (brutePosMaxCount <= MAX_PASSWORD_LENGTH)))
 				usage();
 		}
 		else if ((strcmp(argv[i], "-m")==0) && (i+1<argc)){
@@ -137,7 +139,7 @@ void parseArgs(int argc, char* argv[]){
 			extraChars = atoi(argv[++i]);
 		else if ((strcmp(argv[i], "-q")==0))
 			isQuiet = true;
-		
+
 		else usage();
 	}
 
@@ -166,7 +168,7 @@ void parseArgs(int argc, char* argv[]){
 		if (brutePosMinCount < 0)
 			brutePosMinCount = 1;
 		if (brutePosMaxCount < 0){
-			brutePosMaxCount = MAX_PASSWORD_LENGTH;	
+			brutePosMaxCount = MAX_PASSWORD_LENGTH;
 			printf("WARNING: You have not specified a max password length, which is wildly inefficient. Supply one now? (y/n)\n");
 			char yesno;
 			scanf("%c", &yesno);
@@ -200,12 +202,12 @@ void parseArgs(int argc, char* argv[]){
 				break;
 		}
 	}
-	
+
 }
 
 void DictCrack(char *dictFile)
 {
-	
+
 	FILE *f = NULL;
 	int index, fileOffset=0;
 	int i,j,readCount;
@@ -222,30 +224,30 @@ void DictCrack(char *dictFile)
 	fileOffset = 0;
 
     do
-	{   
+	{
 		// read bulk data from file....
 		readCount = fread(fileBuffer, 1,fileBufferSize, f);
 
 		if( readCount == 0 )
 			break;
-		
+
 		// If we have read less chars..then this is the last block...
 		if( readCount < fileBufferSize )
 			isLastBlock = 1;
 		else
 			isLastBlock = 0;
-		
+
 		index = 0;
-		
+
 		// check if the begining contains 10,13 chars..if so just skip them...
 		for(index=0; index < readCount && (fileBuffer[index]==13 || fileBuffer[index]==10) ; index++);
 
-		do  
+		do
 		{
-		
+
 			// Go through the file buffer..extracting each password....
 			dictPasswd[0]=0;
-			
+
 			for(i=index,j=0; i < readCount && fileBuffer[i] != 10 ; i++,j++)
 				dictPasswd[j]=fileBuffer[i];
 
@@ -254,7 +256,7 @@ void DictCrack(char *dictFile)
 			// check if reading finished before '13' i.e we hit the wall
 			if( i >= readCount && !( isLastBlock && dictPasswd[0]!=0) )
 			{
-				
+
 				if(fileBuffer[i] != 10 )
 				{
 					fileOffset += index;
@@ -264,29 +266,29 @@ void DictCrack(char *dictFile)
 				{
 					fileOffset +=readCount;
 				}
-				
+
 				break;
 			}
-		
+
 			index += strlen(dictPasswd) + 1;
-	
+
 			if (!isQuiet)
-				printf("%s\n", dictPasswd);		 
+				printf("%s\n", dictPasswd);
 			if( CheckMasterPassword(dictPasswd) )
 			{
 				printf("Password:\t \"%s\"\n", dictPasswd);
 				fclose(f);
 				exit(0);
 			}
-			
+
 			if (isHybrid)
 				HybridCrack(dictPasswd);
-			
+
 		}
 		while(1);
     }
-	while(1); 
-    
+	while(1);
+
 	fclose(f);
 }
 
@@ -299,15 +301,15 @@ void HybridCrack(char *hybridPassword){
 	switch(hybridCrackMode)
 	{
 		// Shift Case
-		case 0:														
+		case 0:
 			while (count < pow(2, n) ){
 				shiftCase(hybridPassword[n-1]);
 				for (i = 1; i < n; i++){
 					bin = (int)pow(2,i);
 					if (count % bin == 0)
-						shiftCase(hybridPassword[n-i-1]);	
+						shiftCase(hybridPassword[n-i-1]);
 				}
-		
+
 				if (!isQuiet)
 					printf("%s\n", hybridPassword, count);
 
@@ -315,18 +317,18 @@ void HybridCrack(char *hybridPassword){
 					printf("Password:\t \"%s\"\n", hybridPassword);
 					exit(0);
 				}
-				count++;	
+				count++;
 			}
 			break;
 
 		// Prefix
 		case 1:
-			// Set the brute pattern to ***[dictionaryPassword]														
+			// Set the brute pattern to ***[dictionaryPassword]
 			for (i = 0; i< extraChars; i++)
-				brutePattern[i] = '*';		
+				brutePattern[i] = '*';
 			for (i; i< strlen(hybridPassword)+extraChars; i++)
 				brutePattern[i] = hybridPassword[i-extraChars];
-			
+
 			brutePosMaxCount = strlen(brutePattern);
 			for(i=0; i< brutePosMaxCount; i++)
 			{
@@ -341,7 +343,7 @@ void HybridCrack(char *hybridPassword){
 			break;
 		// Append
 		case 2:
-			// Set the brute pattern to [dictionaryPassword]***														
+			// Set the brute pattern to [dictionaryPassword]***
 			for (i = 0; i< strlen(hybridPassword); i++)
 				brutePattern[i] = hybridPassword[i];
 			for (i; i< strlen(hybridPassword)+extraChars; i++)
@@ -359,7 +361,7 @@ void HybridCrack(char *hybridPassword){
 
 			BruteCrack(bruteCharSet, hybridPassword, 0, 0);
 			break;
-	}	
+	}
 }
 
 void shiftCase(char &c){
@@ -379,7 +381,7 @@ void shiftCase(char &c){
 
 	// Caps
 	if ((numValue >= 97) && (numValue <=122))
-		c-=32;		
+		c-=32;
 	else if ((numValue >= 65) && (numValue <= 90))
 		c+=32;
 
@@ -394,10 +396,10 @@ void shiftCase(char &c){
 		// 2 <-> @
 		switch(numValue)
 		{
-			// 6 <-> ^	
+			// 6 <-> ^
 			case 50: c = 64; break;
 			case 64: c = 50; break;
-		
+
 			case 54: c = 94; break;
 			case 94: c = 54; break;
 			// 7 <-> &
@@ -459,7 +461,7 @@ void shiftCase(char &c){
 }
 
 void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, int next )
-{	
+{
 	int i;
 	if (index >= brutePosMaxCount) return;
 	for(i=0; i< bruteCharCount; i++ )
@@ -498,7 +500,7 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 			if( index == (brutePosMaxCount-1) )
 			{
 				brutePasswd[index+1] = 0;
-			
+
 				if(!isQuiet)
 					printf("%s\n", brutePasswd);
 				bruteCount++;
@@ -523,12 +525,12 @@ static int CheckMasterPassword(char *password)
 {
 		unsigned char passwordHash[SHA1_LENGTH+1];
 
-        SHA1Context ctx;
+        SHA_CTX ctx;
 
         // Copy already calculated partial hash data..
-        memcpy(&ctx, &pctx, sizeof(SHA1Context) );
+        memcpy(&ctx, &pctx, sizeof(SHA_CTX) );
         SHA1_Update(&ctx, (unsigned char *)password, strlen(password));
-    	SHA1_End(&ctx, passwordHash);
+    	SHA1_Final(passwordHash, &ctx);
 
         return nsspkcs5_CipherData(paramPKCS5, passwordHash, encString);  //&encStringItem );
 }
@@ -536,32 +538,32 @@ static int CheckMasterPassword(char *password)
 
 
 void usage(){
-	printf("Usage\n\t./firemaster_linux [firefox profile directory] [crack type] [options]\n\n");	
-	printf("Brute Force Options:\t(-b)\n");	
+	printf("Usage\n\t./firemaster_linux [firefox profile directory] [crack type] [options]\n\n");
+	printf("Brute Force Options:\t(-b)\n");
 	printf("\t-l\tmaximum length of password, not to exceed 128\n");
 	printf("\t-m\tminimum length of password\n");
 	printf("\t-p\tpattern to use for cracking - use single quotes (i.e. 'p***word')\n");
 	printf("\t-c\tcharacter set to use for cracking (i.e. 'abcABC')\n\n");
-	printf("Dictionary Options:\t(-d)\n");	
+	printf("Dictionary Options:\t(-d)\n");
 	printf("\t-f\tdictionary file to use for cracking\n\n");
 	printf("Hybrid Crack Options:\t(-h)\n");
-	printf("\t-f\tdictionary file to use for hybrid modification (defaults to -0)\n");	
+	printf("\t-f\tdictionary file to use for hybrid modification (defaults to -0)\n");
 	printf("\t-0\tshift Cracking on individual characters i.e. 'a'->'A' '1'->'!'\n");
 	printf("\t-1\tprefix i.e. 'pass' -> '1pass' \n");
 	printf("\t-2\tappend i.e. 'pass' -> 'pass2' \n");
-	printf("\t\t-a\tnumber of characters to append/prefix (required for -1 and -2)\n");	
+	printf("\t\t-a\tnumber of characters to append/prefix (required for -1 and -2)\n");
 	printf("\n");
 
-	exit(2);	
+	exit(2);
 }
 
 int FireMasterInit(char *dirProfile)
 {
     SECItem saltItem;
-	
+
 	if( CrackKeyData(dirProfile, keyCrackData) == false)
 	{
-		exit(0);	
+		exit(0);
 	}
 
 	// Initialize the pkcs5 structure...
@@ -569,19 +571,19 @@ int FireMasterInit(char *dirProfile)
 	saltItem.len  = keyCrackData.saltLen;
 	saltItem.data = keyCrackData.salt;
 	paramPKCS5 = nsspkcs5_NewParam(NULL, &saltItem, 1);
-	
+
 	if( paramPKCS5 == NULL)
 	{
 		printf("\n Failed to initialize NSSPKCS5 structure");
 		exit(0);
    	}
 
-	// Current algorithm is 
+	// Current algorithm is
 	// SEC_OID_PKCS12_PBE_WITH_SHA1_AND_TRIPLE_DES_CBC
 
 	// Setup the encrypted password-check string
     memcpy(encString, keyCrackData.encData, keyCrackData.encDataLen );
-	
+
 	if( CheckMasterPassword("") == true )
 	{
 		printf("\n Master password is not set ...exiting FireMaster \n\n");
@@ -589,7 +591,7 @@ int FireMasterInit(char *dirProfile)
 	}
 
 	// Calculate partial sha1 data for password hashing...
-    SHA1_Begin(&pctx);
+    SHA1_Init(&pctx);
 	SHA1_Update(&pctx, keyCrackData.globalSalt, keyCrackData.globalSaltLen);
 
 	return true;
