@@ -56,14 +56,11 @@ time_t start, end;
 
 int main(int argc, char* argv[]){
 
-	char* patternmatch;
 	char* profileDir = argv[1];
 	if ((argc < 2)|| (profileDir[0] != '/')){
 		printf("\nPlease input the absolute directory of the firefox profile as argument 1\n\n");
 		usage();
 	}
-
-	int i;
 
 	FireMasterInit(profileDir);
 

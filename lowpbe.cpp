@@ -214,8 +214,6 @@ SECItem *nsspkcs5_PBKDF1Extended(NSSPKCS5PBEParameter *pbe_param, SECItem *pwite
 
 static SECStatus nsspkcs5_FillInParam(int algorithm, struct NSSPKCS5PBEParameter *pbe_param)
 {
-	PRBool skipType = PR_FALSE;
-
 
 	pbe_param->hashType = 0;	//HASH_AlgSHA1;
 	pbe_param->pbeType = NSSPKCS5_PBKDF1;
@@ -314,10 +312,8 @@ static SECStatus nsspkcs5_FillInParam(int algorithm, struct NSSPKCS5PBEParameter
  */
 NSSPKCS5PBEParameter *nsspkcs5_NewParam(int alg, SECItem * salt, int iterator)
 {
-	PRArenaPool *arena = NULL;
 	NSSPKCS5PBEParameter *pbe_param = NULL;
 	SECStatus rv = SECFailure;
-
 
 	pbe_param = (NSSPKCS5PBEParameter *) malloc(sizeof(NSSPKCS5PBEParameter));
 
