@@ -36,8 +36,8 @@
 
 #include <plarena.h>
 #include <openssl/sha.h>
-#include "seccomon.h"
-#include "hasht.h"
+#include <seccomon.h>
+#include <hasht.h>
 
 
 typedef SECItem *(*SEC_PKCS5GetPBEPassword) (void *arg);
@@ -82,7 +82,7 @@ SEC_BEGIN_PROTOS
  * keyDB which only support PKCS 5 v1, PFX, and PKCS 12.
  */
 // My Mod
-    NSSPKCS5PBEParameter * nsspkcs5_NewParam(int alg, SECItem * salt, int iterator);
+    struct NSSPKCS5PBEParameter * nsspkcs5_NewParam(int alg, SECItem * salt, int iterator);
 
 
 /* Encrypt/Decrypt data using password based encryption.
@@ -94,12 +94,11 @@ SEC_BEGIN_PROTOS
  * is either encrypted or decrypted.  If an error occurs, NULL
  * is returned, otherwise the ciphered contents is returned.
  */
-//extern int nsspkcs5_CipherData(NSSPKCS5PBEParameter *, SECItem *pwitem,SECItem *src);
-extern int nsspkcs5_CipherData(NSSPKCS5PBEParameter * pbe_param, const unsigned char *pwhash,
+extern int nsspkcs5_CipherData(struct NSSPKCS5PBEParameter * pbe_param, const unsigned char *pwhash,
     const unsigned char *encString);
 
 /* Destroys PBE parameter */
-extern void nsspkcs5_DestroyPBEParameter(NSSPKCS5PBEParameter * param);
+extern void nsspkcs5_DestroyPBEParameter(struct NSSPKCS5PBEParameter * param);
 
 SEC_END_PROTOS
 #endif

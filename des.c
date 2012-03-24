@@ -584,8 +584,6 @@ void DES_Do1Block(HALF * ks, const BYTE * inbuf, BYTE * outbuf)
     register HALF left, right;
     register HALF temp;
 
-
-
     if (((ptrdiff_t)inbuf & 0x03) == 0)
 	{
 		left  = HALFPTR(inbuf)[0];
@@ -722,7 +720,7 @@ void DES_Do1Block(HALF * ks, const BYTE * inbuf, BYTE * outbuf)
 #define COPY8BFROMHALF(to, from) COPY8B(to, from, to)
 
 
-void DES_ECB(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
+void DES_ECB(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
 {
     while (len) {
 	DES_Do1Block(cx->ks0, in, out);
@@ -732,7 +730,7 @@ void DES_ECB(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
     }
 }
 
-void DES_EDE3_ECB(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
+void DES_EDE3_ECB(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
 {
     while (len) {
 	DES_Do1Block(cx->ks0,  in, out);
@@ -744,7 +742,7 @@ void DES_EDE3_ECB(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
     }
 }
 
- void DES_CBCEn(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
+ void DES_CBCEn(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
 {
     const BYTE * bufend = in + len;
     HALF  vec[2];
@@ -760,7 +758,7 @@ void DES_EDE3_ECB(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
     }
 }
 
-void DES_CBCDe(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
+void DES_CBCDe(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
 {
     const BYTE * bufend;
     HALF oldciphertext[2];
@@ -779,7 +777,7 @@ void DES_CBCDe(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
     }
 }
 
-void DES_EDE3CBCEn(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
+void DES_EDE3CBCEn(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
 {
     const BYTE * bufend = in + len;
     HALF  vec[2];
@@ -798,7 +796,7 @@ void DES_EDE3CBCEn(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len)
 }
 
 // This is the algorithm used for decryption....
-int DES_EDE3CBCDe(DESContext *cx, const BYTE *in)
+int DES_EDE3CBCDe(struct DESContext *cx, const BYTE *in)
 {
     //const BYTE * bufend;
 //	unsigned char* str; int j;
@@ -865,11 +863,11 @@ int DES_EDE3CBCDe(DESContext *cx, const BYTE *in)
 		return 1;
 }
 
-DESContext dcx;
+struct DESContext dcx;
 
-DESContext *DES_CreateContext(const BYTE * key, const BYTE *iv)
+struct DESContext *DES_CreateContext(const BYTE * key, const BYTE *iv)
 {
-    DESContext *cx = &dcx;
+    struct DESContext *cx = &dcx;
 
 	cx->direction =  DES_DECRYPT;
 	COPY8BTOHALF(cx->iv, iv);
@@ -924,7 +922,7 @@ DESContext *DES_CreateContext(const BYTE * key, const BYTE *iv)
 	*/
 }
 
-void DES_DestroyContext(DESContext *cx, PRBool freeit)
+void DES_DestroyContext(struct DESContext *cx, PRBool freeit)
 {
     if (cx)
 	{
@@ -935,7 +933,7 @@ void DES_DestroyContext(DESContext *cx, PRBool freeit)
 
  }
 
-SECStatus DES_Encrypt(DESContext *cx, BYTE *out, unsigned int *outLen, unsigned int maxOutLen, const BYTE *in, unsigned int inLen)
+SECStatus DES_Encrypt(struct DESContext *cx, BYTE *out, unsigned int *outLen, unsigned int maxOutLen, const BYTE *in, unsigned int inLen)
 {
 
     if (inLen < 0 || (inLen % 8) != 0 || maxOutLen < inLen || !cx || cx->direction != DES_ENCRYPT)
@@ -952,7 +950,7 @@ SECStatus DES_Encrypt(DESContext *cx, BYTE *out, unsigned int *outLen, unsigned 
 }
 
 
-int DES_Decrypt(DESContext *cx, BYTE *out, unsigned int *outLen,unsigned int maxOutLen, const BYTE *in, unsigned int inLen)
+int DES_Decrypt(struct DESContext *cx, BYTE *out, unsigned int *outLen,unsigned int maxOutLen, const BYTE *in, unsigned int inLen)
 {
     // ((DESFunc*)cx->worker)(cx, out, in, inLen);
     return DES_EDE3CBCDe(cx, in);

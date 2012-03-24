@@ -31,17 +31,16 @@
  * GPL.
  */
 
-//#include "plarena.h"
+#include <plarena.h>
 #include "lowpbe.h"
 #include <openssl/sha.h>
 #include <memory.h>
 #include <stdio.h>
-#include "hasht.h"
-#include "secoidt.h"
+#include <hasht.h>
+#include <secoidt.h>
+#include <secerr.h>
 #include "des.h"
 #include "alghmac.h"
-
-#include "secerr.h"
 
 
 
@@ -79,7 +78,7 @@ SECItem *nsspkcs5_PBKDF1( const unsigned char *pwdHash)
 
 
 
-unsigned char *computeKey(NSSPKCS5PBEParameter * pbe_param, const unsigned char *pwdHash)	//SECItem *init_hash);
+unsigned char *computeKey(struct NSSPKCS5PBEParameter * pbe_param, const unsigned char *pwdHash)	//SECItem *init_hash);
 {
 	SECItem *ret_bits = &pkcs5_pfxpbe;
 
@@ -113,14 +112,15 @@ unsigned char *computeKey(NSSPKCS5PBEParameter * pbe_param, const unsigned char 
 	memcpy(state, saltData, saltLen);
 
 
-	HMACContext cx;
+	struct HMACContext cx;
 	SHA_CTX lctx;
 
 	memset(cx.ipad, 0x36, HMAC_PAD_SIZE);
 	memset(cx.opad, 0x5c, HMAC_PAD_SIZE);
 
 	/* fold secret into padding */
-	for (int k = 0; k < SHA1_LENGTH; k++) {
+	int k;
+	for (k = 0; k < SHA1_LENGTH; k++) {
 		cx.ipad[k] ^= firstHash[k];
 		cx.opad[k] ^= firstHash[k];
 	}
@@ -194,7 +194,7 @@ unsigned char *computeKey(NSSPKCS5PBEParameter * pbe_param, const unsigned char 
  * based on the extension proposed in PKCS 12
  */
 /*
-SECItem *nsspkcs5_PBKDF1Extended(NSSPKCS5PBEParameter *pbe_param, SECItem *pwitem)
+SECItem *nsspkcs5_PBKDF1Extended(struct NSSPKCS5PBEParameter *pbe_param, SECItem *pwitem)
 {
     SECItem * hash;
     int       bytes_needed;
@@ -310,12 +310,12 @@ static SECStatus nsspkcs5_FillInParam(int algorithm, struct NSSPKCS5PBEParameter
 
 /* decode the algid and generate a PKCS 5 parameter from it
  */
-NSSPKCS5PBEParameter *nsspkcs5_NewParam(int alg, SECItem * salt, int iterator)
+struct NSSPKCS5PBEParameter *nsspkcs5_NewParam(int alg, SECItem * salt, int iterator)
 {
-	NSSPKCS5PBEParameter *pbe_param = NULL;
+	struct NSSPKCS5PBEParameter *pbe_param = NULL;
 	SECStatus rv = SECFailure;
 
-	pbe_param = (NSSPKCS5PBEParameter *) malloc(sizeof(NSSPKCS5PBEParameter));
+	pbe_param = (struct NSSPKCS5PBEParameter *) malloc(sizeof(struct NSSPKCS5PBEParameter));
 
 	if (pbe_param == NULL)
 		return NULL;
@@ -360,7 +360,7 @@ NSSPKCS5PBEParameter *nsspkcs5_NewParam(int alg, SECItem * salt, int iterator)
 int sec_pkcs5_des(const unsigned char *hash, const unsigned char *encString)
 {
 
-	DESContext *dctx;
+	struct DESContext *dctx;
 
 	//dctx = DES_CreateContext(key->data, iv->data, NSS_DES_EDE3_CBC);
 	dctx = DES_CreateContext(hash, hash + 32);	//, NSS_DES_EDE3_CBC);
@@ -383,12 +383,12 @@ typedef SECItem *(*pkcs5_crypto_func) (SECItem * key, SECItem * iv, SECItem * sr
  */
 /* change this to use PKCS 11? */
 // Optimized for FireMaster....
-int nsspkcs5_CipherData(NSSPKCS5PBEParameter * pbe_param, const unsigned char *pwhash, const unsigned char *encString)
+int nsspkcs5_CipherData(struct NSSPKCS5PBEParameter * pbe_param, const unsigned char *pwhash, const unsigned char *encString)
 {
 
 	unsigned char *hashKey = computeKey(pbe_param, pwhash);
 
-	DESContext *dctx;
+	struct DESContext *dctx;
 	dctx = DES_CreateContext(hashKey, hashKey + 32);	//, NSS_DES_EDE3_CBC);
 
 	return DES_EDE3CBCDe(dctx, encString);

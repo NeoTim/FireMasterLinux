@@ -16,7 +16,7 @@ void BruteCrack(const char *, char *, const int, int);
 void parseArgs(int, char **);
 void DictCrack(char *);
 void HybridCrack(char *);
-void shiftCase(char&);
+void shiftCase(char*);
 /**** End Function Prototypes ***/
 
 
@@ -28,8 +28,8 @@ int crackMethod = -1;
 // Database items
 SHA_CTX pctx;
 unsigned char encString[128];
-NSSPKCS5PBEParameter *paramPKCS5 = NULL;
-KeyCrackData keyCrackData;
+struct NSSPKCS5PBEParameter *paramPKCS5 = NULL;
+struct KeyCrackData keyCrackData;
 // General Bruteforce
 int bruteCharCount;
 int brutePosMaxCount=-1;
@@ -102,7 +102,8 @@ int main(int argc, char* argv[]){
 void parseArgs(int argc, char* argv[]){
 
 	// Start at two, since argv[1] is the profile directory
-	for (int i = 2; i < argc; i++){
+	int i;
+	for (i = 2; i < argc; i++){
 		if ((strcmp(argv[i], "-b")==0))
 			crackMethod = 0;
 		else if ((strcmp(argv[i], "-d")==0))
@@ -168,10 +169,11 @@ void parseArgs(int argc, char* argv[]){
 			brutePosMaxCount = MAX_PASSWORD_LENGTH;
 			printf("WARNING: You have not specified a max password length, which is wildly inefficient. Supply one now? (y/n)\n");
 			char yesno;
-			scanf("%c", &yesno);
+			int ret;
+			ret = scanf("%c", &yesno);
 			if ((yesno == 'y') || (yesno == 'Y')){
 				printf("Enter the max password length:\n");
-				scanf("%i", &brutePosMaxCount);
+				ret = scanf("%i", &brutePosMaxCount);
 			}
 			else if ((yesno == 'n') || (yesno == 'N')){
 				printf("If you insist...\n");
@@ -188,12 +190,12 @@ void parseArgs(int argc, char* argv[]){
 			case 0:
 				break;
 			case 1:
-				if ((bruteCharSet == NULL)||(extraChars == NULL))
+				if ((bruteCharSet == NULL)||(extraChars == 0))
 					usage();
 				bruteCharCount = strlen(bruteCharSet);
 				break;
 			case 2:
-				if ((bruteCharSet == NULL)||(extraChars == NULL))
+				if ((bruteCharSet == NULL)||(extraChars == 0))
 					usage();
 				bruteCharCount = strlen(bruteCharSet);
 				break;
@@ -300,15 +302,15 @@ void HybridCrack(char *hybridPassword){
 		// Shift Case
 		case 0:
 			while (count < pow(2, n) ){
-				shiftCase(hybridPassword[n-1]);
+				shiftCase(&hybridPassword[n-1]);
 				for (i = 1; i < n; i++){
 					bin = (int)pow(2,i);
 					if (count % bin == 0)
-						shiftCase(hybridPassword[n-i-1]);
+						shiftCase(&hybridPassword[n-i-1]);
 				}
 
 				if (!isQuiet)
-					printf("%s\n", hybridPassword, count);
+					printf("%s\n", hybridPassword);
 
 				if (CheckMasterPassword(hybridPassword)){
 					printf("Password:\t \"%s\"\n", hybridPassword);
@@ -361,7 +363,7 @@ void HybridCrack(char *hybridPassword){
 	}
 }
 
-void shiftCase(char &c){
+void shiftCase(char *c){
 	/*	CAPS
 	a-z = 97-122	A-Z = 65-90
 
@@ -374,46 +376,46 @@ void shiftCase(char &c){
 	, < = 44-60		. > = 46-62		/ ? = 47-63
 	\ | = 92-124  */
 
-	int numValue = (int)c;
+	int numValue = (int)*c;
 
 	// Caps
 	if ((numValue >= 97) && (numValue <=122))
-		c-=32;
+		*c = *c - 32;
 	else if ((numValue >= 65) && (numValue <= 90))
-		c+=32;
+		*c = *c + 32;
 
 	// number row
 	else if( ((numValue >= 33) && (numValue <= 42)) || ((numValue >= 48) && (numValue <= 57)) || (numValue == 64) || (numValue ==94) )
 	{
 	// 1,3-5 <-> !#$%
 		if ((numValue == 49) || ((numValue >=51) && (numValue <= 53)))
-			c-=16;
+			*c = *c - 16;
 		if ((numValue == 33) || ((numValue >=35) && (numValue <= 37)))
-			c+=16;
+			*c = *c + 16;
 		// 2 <-> @
 		switch(numValue)
 		{
 			// 6 <-> ^
-			case 50: c = 64; break;
-			case 64: c = 50; break;
+			case 50: *c = 64; break;
+			case 64: *c = 50; break;
 
-			case 54: c = 94; break;
-			case 94: c = 54; break;
+			case 54: *c = 94; break;
+			case 94: *c = 54; break;
 			// 7 <-> &
-			case 55: c = 38; break;
-			case 38: c = 55; break;
+			case 55: *c = 38; break;
+			case 38: *c = 55; break;
 			// 8 <-> *
-			case 56: c = 42; break;
-			case 42: c = 56; break;
+			case 56: *c = 42; break;
+			case 42: *c = 56; break;
 			// 9 <-> (
-			case 57: c = 40; break;
-			case 40: c = 57; break;
+			case 57: *c = 40; break;
+			case 40: *c = 57; break;
 			// 0 <-> )
-			case 48: c = 41; break;
-			case 41: c = 48; break;
+			case 48: *c = 41; break;
+			case 41: *c = 48; break;
 			// ' <-> "
-			case 39: c = 34; break;
-			case 34: c = 39; break;
+			case 39: *c = 34; break;
+			case 34: *c = 39; break;
 		}
 	}
 
@@ -423,35 +425,35 @@ void shiftCase(char &c){
 		// ` <-> ~
 		switch(numValue)
 		{
-			case 96: c = 126; break;
-			case 126: c = 96; break;
+			case 96: *c = 126; break;
+			case 126: *c = 96; break;
 			// - <-> _
-			case 45: c = 95; break;
-			case 95: c = 45; break;
+			case 45: *c = 95; break;
+			case 95: *c = 45; break;
 			// = <-> +
-			case 61: c = 43; break;
-			case 43: c = 61; break;
+			case 61: *c = 43; break;
+			case 43: *c = 61; break;
 			// [ <-> {
-			case 91: c = 123; break;
-			case 123: c = 91; break;
+			case 91: *c = 123; break;
+			case 123: *c = 91; break;
 			// ] <-> }
-			case 93: c = 125; break;
-			case 125: c = 93; break;
+			case 93: *c = 125; break;
+			case 125: *c = 93; break;
 			// ; <-> :
-			case 59: c = 58; break;
-			case 58: c = 59; break;
+			case 59: *c = 58; break;
+			case 58: *c = 59; break;
 			// , <-> <
-			case 44: c = 60; break;
-			case 60: c = 44; break;
+			case 44: *c = 60; break;
+			case 60: *c = 44; break;
 			// . <-> >
-			case 46: c = 62; break;
-			case 62: c = 46; break;
+			case 46: *c = 62; break;
+			case 62: *c = 46; break;
 			// / <-> ?
-			case 47: c = 63; break;
-			case 63: c = 47; break;
+			case 47: *c = 63; break;
+			case 63: *c = 47; break;
 			// \ <-> | = 92-124
-			case 92: c = 124; break;
-			case 124: c = 92; break;
+			case 92: *c = 124; break;
+			case 124: *c = 92; break;
 		}
 	}
 	// if not a value to be shifted, then return the origional value
@@ -479,7 +481,7 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 				{
 					time(&end);
 					int diff = difftime(end,start);
-					printf("\nPassword: \t\"%s\"\tElapsed Time: %d \tCracks/sec: %d\n", brutePasswd, diff, bruteCount/diff);
+					printf("\nPassword: \t\"%s\"\tElapsed Time: %d \tCracks/sec: %ld\n", brutePasswd, diff, bruteCount/diff);
 					exit(0);
 				}
 			}
@@ -505,7 +507,7 @@ void BruteCrack(const char *bruteCharSet, char *brutePasswd, const int index, in
 				{
 					time(&end);
 					int diff = difftime(end,start);
-					printf("\nPassword: \t\"%s\"\tElapsed Time: %d \tCracks/sec: %d\n", brutePasswd, diff, bruteCount/diff);
+					printf("\nPassword: \t\"%s\"\tElapsed Time: %d \tCracks/sec: %ld\n", brutePasswd, diff, bruteCount/diff);
 					exit(0);
 				}
 			}
@@ -558,7 +560,7 @@ int FireMasterInit(char *dirProfile)
 {
     SECItem saltItem;
 
-	if( CrackKeyData(dirProfile, keyCrackData) == false)
+	if( CrackKeyData(dirProfile, &keyCrackData) == false)
 	{
 		exit(0);
 	}
@@ -567,7 +569,7 @@ int FireMasterInit(char *dirProfile)
 	saltItem.type = (SECItemType) 0;
 	saltItem.len  = keyCrackData.saltLen;
 	saltItem.data = keyCrackData.salt;
-	paramPKCS5 = nsspkcs5_NewParam(NULL, &saltItem, 1);
+	paramPKCS5 = nsspkcs5_NewParam(0, &saltItem, 1);
 
 	if( paramPKCS5 == NULL)
 	{

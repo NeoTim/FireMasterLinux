@@ -26,6 +26,7 @@
 
 
 #include "FireMaster.h"
+#include <stdbool.h>
 
 #define KEYDB_FILENAME			"key3.db"
 //#define KEYDB_MAGIC_OFFSET		0x1000
@@ -65,10 +66,8 @@ struct KeyCrackData
 
 
 // ** brosideon mod ** //
-//BOOL OpenKeyDBFile(char *profilePath);
 bool OpenKeyDBFile(char *profilePath);
-//BOOL CrackKeyData(char *profilePath, KeyCrackData &keyCrackData);
-bool CrackKeyData(char *profilePath, KeyCrackData &keyCrackData);
+bool CrackKeyData(char *profilePath, struct KeyCrackData *keyCrackData);
 // ** brosideon mod ** //
 
 #endif

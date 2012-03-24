@@ -16,7 +16,7 @@
  * The Original Code is the DES-150 library.
  *
  * The Initial Developer of the Original Code is Nelson B. Bolyard,
- * nelsonb@iname.com.  Portions created by Nelson B. Bolyard are 
+ * nelsonb@iname.com.  Portions created by Nelson B. Bolyard are
  * Copyright (C) 1990, 2000  Nelson B. Bolyard, All Rights Reserved.
  *
  * Contributor(s):
@@ -76,21 +76,21 @@ struct DESContext
 
 };
 
-typedef void DESFunc(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
+typedef void DESFunc(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
 
 void DES_MakeSchedule( HALF * ks, const BYTE * key,   DESDirection direction);
 void DES_Do1Block(     HALF * ks, const BYTE * inbuf, BYTE * outbuf);
-DESContext *DES_CreateContext(const BYTE * key, const BYTE *iv); //, int mode);
-void DES_DestroyContext(DESContext *cx, PRBool freeit);
-SECStatus DES_Encrypt(DESContext *cx, BYTE *out, unsigned int *outLen, unsigned int maxOutLen, const BYTE *in, unsigned int inLen);
-int DES_Decrypt(DESContext *cx, BYTE *out, unsigned int *outLen,unsigned int maxOutLen, const BYTE *in, unsigned int inLen);
-int DES_EDE3CBCDe(DESContext *cx, const BYTE *in);
+struct DESContext *DES_CreateContext(const BYTE * key, const BYTE *iv); //, int mode);
+void DES_DestroyContext(struct DESContext *cx, PRBool freeit);
+SECStatus DES_Encrypt(struct DESContext *cx, BYTE *out, unsigned int *outLen, unsigned int maxOutLen, const BYTE *in, unsigned int inLen);
+int DES_Decrypt(struct DESContext *cx, BYTE *out, unsigned int *outLen,unsigned int maxOutLen, const BYTE *in, unsigned int inLen);
+int DES_EDE3CBCDe(struct DESContext *cx, const BYTE *in);
 
 //not used...
-void DES_EDE3CBCEn(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
-void DES_CBCEn(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
-void DES_EDE3_ECB(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
-void DES_ECB(DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
+void DES_EDE3CBCEn(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
+void DES_CBCEn(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
+void DES_EDE3_ECB(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
+void DES_ECB(struct DESContext *cx, BYTE *out, const BYTE *in, unsigned int len);
 
 
 

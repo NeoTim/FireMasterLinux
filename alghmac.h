@@ -54,7 +54,7 @@ struct HMACContext
 //SEC_BEGIN_PROTOS
 
 /* destroy HMAC context */
-extern void HMAC_Destroy(HMACContext *cx);
+extern void HMAC_Destroy(struct HMACContext *cx);
 
 /* create HMAC context
  *  hashObj     hash object from SECRawHashObjects[]
@@ -64,17 +64,17 @@ extern void HMAC_Destroy(HMACContext *cx);
  *
  * NULL is returned if an error occurs.
  */
-extern HMACContext *HMAC_Create(const unsigned char *secret, unsigned int secret_len);
+extern struct HMACContext *HMAC_Create(const unsigned char *secret, unsigned int secret_len);
 
 /* reset HMAC for a fresh round */
-extern void HMAC_Begin(HMACContext *cx);
+extern void HMAC_Begin(struct HMACContext *cx);
 
 /* update HMAC
  *  cx		HMAC Context
  *  data	the data to perform HMAC on
  *  data_len	the length of the data to process
  */
-extern void HMAC_Update(HMACContext *cx, const unsigned char *data, unsigned int data_len);
+extern void HMAC_Update(struct HMACContext *cx, const unsigned char *data, unsigned int data_len);
 
 /* Finish HMAC -- place the results within result
  *  cx		HMAC context
@@ -82,7 +82,7 @@ extern void HMAC_Update(HMACContext *cx, const unsigned char *data, unsigned int
  *  result_len	where the resultant hmac length is stored
  *  max_result_len  maximum possible length that can be stored in result
  */
-extern void HMAC_Finish(HMACContext *cx, unsigned char *result, unsigned int *result_len,
+extern void HMAC_Finish(struct HMACContext *cx, unsigned char *result, unsigned int *result_len,
 	    unsigned int max_result_len);
 
 

@@ -21,17 +21,13 @@
 
 
 
-// #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <conio.h>
 #include <math.h>
 #include <time.h>
-
-
+#include <stdbool.h>
 #include "lowpbe.h"
-
 
 #ifndef TRUE
 #define TRUE 1
@@ -53,11 +49,12 @@
 int FireMasterInit(char *dirProfile);
 void FireMasterExit();
 
-void DictCrack(char *dictFile,int isHybrid);
-void HybridCrack(int index );
+//void DictCrack(char *dictFile,int isHybrid);
+//void HybridCrack(int index );
 
 // ** brosideon mod ** //
-void PrintUsage(char *progName, bool waitForInput=FALSE);
+//void PrintUsage(char *progName, bool waitForInput=FALSE);
+void PrintUsage(char *progName, bool waitForInput);
 // ** brosideon mod ** //
 void ParseArg(int argc, char *argv[]);
 
